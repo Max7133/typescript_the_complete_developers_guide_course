@@ -6,6 +6,9 @@
 /.pnp
 .pnp.js
 
+# Ignore Parcel cache
+.parcel-cache/
+
 # testing
 /coverage
 
