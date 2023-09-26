@@ -1,19 +1,14 @@
 /// <reference types="@types/google.maps" />
 import { User } from './User';
 import { Company } from './Company';
+import { CustomMap } from './CustomMap';
 
 const user = new User();
+
+// passing in the Id of the Element I want to render this Map into
+new CustomMap('map');
 
 console.log(user);
 
 const company = new Company();
 console.log(company);
-
-// mapDiv - reference to an HTML Element of where I want to place the map
-new google.maps.Map(document.getElementById('map') as HTMLElement, {
-  zoom: 1,
-  center: {
-    lat: 0,
-    lng: 0,
-  },
-});
