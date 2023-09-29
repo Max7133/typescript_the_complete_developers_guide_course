@@ -4,11 +4,12 @@ import { Company } from './Company';
 import { CustomMap } from './CustomMap';
 
 const user = new User();
-
 // passing in the Id of the Element I want to render this Map into
-new CustomMap('map');
+const customMap = new CustomMap('map');
+const company = new Company();
 
 console.log(user);
-
-const company = new Company();
 console.log(company);
+
+customMap.addUserMarker(user);
+customMap.addCompanyMarker(company);
