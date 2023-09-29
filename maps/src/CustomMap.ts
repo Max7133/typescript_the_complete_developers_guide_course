@@ -6,6 +6,7 @@ interface Mappable {
     lat: number;
     lng: number;
   };
+  markerContent(): string; // any time I call this function I need to return a 'string'
 }
 
 // carries the reference to the Google map that I create
@@ -44,7 +45,7 @@ export class CustomMap {
     marker.addListener('click', () => {
       const infoWindow = new google.maps.InfoWindow({
         // Options object
-        content: 'Hi there!',
+        content: mappable.markerContent(),
       });
       // Passing in a reference to the Map that I want to show this window on and a reference to the 'marker' that it will going to show this above
       infoWindow.open(this.googleMap, marker);
