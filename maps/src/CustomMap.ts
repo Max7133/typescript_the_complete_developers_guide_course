@@ -1,5 +1,12 @@
-import { User } from './User';
-import { Company } from './Company';
+// Instructions to every other Class
+// on how they can be an Argument to 'addMarker'
+// As long as they satisfy this Interface, they can be an Argument to 'addMarker'
+interface Mappable {
+  location: {
+    lat: number;
+    lng: number;
+  };
+}
 
 // carries the reference to the Google map that I create
 export class CustomMap {
@@ -21,27 +28,16 @@ export class CustomMap {
     );
   }
 
-  // Takes in a User as an Argument and adds a Marker to the Map
-  // annotating the Argument as being an instance of a User (I can use Classes a Types as well)
-  addUserMarker(user: User): void {
+  // (I can use Classes as Types as well)
+  // A Single Value inside of TypeScript can have multiple different Types
+  // It can take any Argument so long as it satisfies the Interface 'Mappable'
+  addMarker(mappable: Mappable): void {
     new google.maps.Marker({
       // Property refering to the Map that I want to show this Marker on
       map: this.googleMap,
       position: {
-        lat: user.location.lat,
-        lng: user.location.lng,
-      },
-    });
-  }
-  // Takes in a Company as an Argument and adds a Marker to the Map
-  // annotating the Argument as being an instance of a Company
-  addCompanyMarker(company: Company): void {
-    new google.maps.Marker({
-      // Property refering to the Map that I want to show this Marker on
-      map: this.googleMap,
-      position: {
-        lat: company.location.lat,
-        lng: company.location.lng,
+        lat: mappable.location.lat,
+        lng: mappable.location.lng,
       },
     });
   }
