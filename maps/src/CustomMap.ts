@@ -32,13 +32,22 @@ export class CustomMap {
   // A Single Value inside of TypeScript can have multiple different Types
   // It can take any Argument so long as it satisfies the Interface 'Mappable'
   addMarker(mappable: Mappable): void {
-    new google.maps.Marker({
+    const marker = new google.maps.Marker({
       // Property refering to the Map that I want to show this Marker on
       map: this.googleMap,
       position: {
         lat: mappable.location.lat,
         lng: mappable.location.lng,
       },
+    });
+    // every time user clicks on the Marker this function is going to run and inside that Function is where InfoWindow will poppup
+    marker.addListener('click', () => {
+      const infoWindow = new google.maps.InfoWindow({
+        // Options object
+        content: 'Hi there!',
+      });
+      // Passing in a reference to the Map that I want to show this window on and a reference to the 'marker' that it will going to show this above
+      infoWindow.open(this.googleMap, marker);
     });
   }
 }
