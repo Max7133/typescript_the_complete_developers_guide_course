@@ -1,12 +1,13 @@
 // Instructions to every other Class
 // on how they can be an Argument to 'addMarker'
 // As long as they satisfy this Interface, they can be an Argument to 'addMarker'
-interface Mappable {
+export interface Mappable {
   location: {
     lat: number;
     lng: number;
   };
   markerContent(): string; // any time I call this function I need to return a 'string'
+  color: string;
 }
 
 // carries the reference to the Google map that I create
