@@ -36,4 +36,81 @@ export class LinkedList {
 
     tail.next = node; // once it gets to the LAST 'node', take the 'node' that I just created and have the 'next' Property of that last one referred to the 'node' I just created
   }
+
+  get length(): number {
+    // if there is no 'head'
+    if (!this.head) {
+      return 0; // because the LinkedList is empty
+    }
+
+    // counting Variable
+    let length = 1;
+    // reference to the 1st 'node' in the Chain
+    let node: Node | null = this.head;
+    while (node.next) {
+      length++; // increment length counter
+      node = node.next; // update the 'node' reference here to point at the 'next node' in the chain
+    }
+
+    return length;
+  }
+
+  // receives an Index and returns the 'node' at that Index
+  at(index: number): Node {
+    if (!this.head) {
+      // if it dosent have a 'head' Property (if the LinkedList is empty), and it tries to get an Element inside of it then throw an Error
+      throw new Error('Index out of bounds');
+    }
+
+    let counter = 0; // because I want to start counting it at Index 0 for that 1st 'node'
+    let node: Node | null = this.head;
+    while (node) {
+      // if it have counted all the way up to the appropriate index, that means it has found the 'node' that it looks for
+      if (counter === index) {
+        // that means return than 'node'
+        return node;
+      }
+
+      // otherwise, continue iterating
+      counter++; // to start to move on to the next 'node'
+      node = node.next; // and it will update the 'node' reference to the 'next node' along the Chain
+    }
+
+    throw new Error('Index out of bounds'); // never found an 'index' that I was looking for
+  }
+
+  compare(leftIndex: number, rightIndex: number): boolean {
+    if (!this.head) {
+      throw new Error('List is empty');
+    }
+
+    // 'node' at leftIndex
+    // .data - I want to reference it's 'data' Property to find the Number inside that actual 'node' and then Compare It to see if it's greater then the 'node' Value at 'rightIndex'
+    return this.at(leftIndex).data > this.at(rightIndex).data;
+  }
+
+  swap(leftIndex: number, rightIndex: number): void {
+    // will only swap Values of the 'node' not the complete node with the 'next' reference
+    const leftNode = this.at(leftIndex); // reference to the 'node' on the LEFT
+    const rightNode = this.at(rightIndex);
+
+    const leftHand = leftNode.data;
+    // taking the 'rightHand' side and throw it into the LEFT
+    leftNode.data = rightNode.data;
+    rightNode.data = leftHand;
+  }
+
+  print(): void {
+    if (!this.head) {
+      return;
+    }
+
+    let node: Node | null = this.head;
+    // while it has a 'node'
+    while (node) {
+      console.log(node.data);
+      // update the 'node' Variable to the 'next node' along the Chain
+      node = node.next;
+    }
+  }
 }
