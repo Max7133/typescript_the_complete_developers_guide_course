@@ -1,5 +1,7 @@
+import { Sorter } from './Sorter';
+
 // This class needs to have a reference to the Array of Numbers that I want to sort
-export class NumbersCollection {
+export class NumbersCollection extends Sorter {
   //data: number[]; // type of Array of Number
 
   //// when the 'Numbers Collection' is created I want to sort it straigt away
@@ -11,7 +13,9 @@ export class NumbersCollection {
   } */
 
   // 2ND WAY (also I removed the initialization on Line 3)
-  constructor(public data: number[]) {}
+  constructor(public data: number[]) {
+    super(); // reference to the 'constructor' of the Parent Class
+  }
 
   // number of elements inside of the 'data' Array, to tell the 'for loops' how many steps of the iteration there are in the 'collection' In 'Sorter.ts'
   // get, so I can write 'collection.length' instead of 'collection.length()' after I will create a 'new Instance of the 'collection' '
