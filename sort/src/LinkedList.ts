@@ -1,3 +1,5 @@
+import { Sorter } from './Sorter';
+
 // 2 values, Value - number, next - reference to the next 'node' in the chain, or it might be 'null', if it's null - means end of the chain
 // not defining the 'next' node in the chain when I create a Node, that's why I will create a 'node' first and then associate it witho some other node in the chain
 class Node {
@@ -8,7 +10,7 @@ class Node {
 
 // will have reference to 'head' Node
 // 'head' is going to be either a reference to a 'node' or it might be 'null' when the LinkedList is first created
-export class LinkedList {
+export class LinkedList extends Sorter {
   head: Node | null = null; // default value === null
 
   // takes in a 'number' and it's going to create a 'node' out of it, then it will add that 'node' to the very end of the chain

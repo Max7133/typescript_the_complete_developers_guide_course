@@ -1,8 +1,8 @@
-interface Sortable {
-  length: number;
-  compare(leftIndex: number, rightIndex: number): boolean; // boolean is going to tell whether or not those 2 El. need to be swapped
-  swap(leftIndex: number, rightIndex: number): void;
-}
+// interface Sortable {
+//   length: number;
+//   compare(leftIndex: number, rightIndex: number): boolean; // boolean is going to tell whether or not those 2 El. need to be swapped
+//   swap(leftIndex: number, rightIndex: number): void;
+// }
 
 // takes the collection of data and
 // abstract class - I don't need to create an instance from it
