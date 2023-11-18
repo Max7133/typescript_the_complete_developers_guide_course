@@ -13,3 +13,17 @@ const matches = fs
   .map((row: string): string[] => {
     return row.split(',');
   });
+
+let manUnitedWins = 0;
+// iterating through collection of matches
+for (let match of matches) {
+  // MU won as home team
+  if (match[1] === 'Man United' && match[5] === 'H') {
+    manUnitedWins++;
+    // MU won as away team
+  } else if (match[2] === 'Man United' && match[5] === 'A') {
+    manUnitedWins++;
+  }
+}
+
+console.log(`Man United won ${manUnitedWins} games`); // Man United won 18 games
