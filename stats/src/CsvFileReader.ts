@@ -3,8 +3,10 @@ import fs from 'fs'; // module in the Node Standard Library
 import { dateStringToDate } from './utils';
 import { MatchResult } from './MatchResult';
 
+type MatchData = [Date, string, string, number, number, MatchResult, string];
+
 export class CsvFileReader {
-  data: string[][] = []; // starts as an empty Array
+  data: MatchData[] = []; // starts as an empty Array
 
   // public - automatically defining a Property on the Class "filename"
   // whatever I pass in as the 1st Arg when I create a CsvFileReader, will be assigned to the "filename" Property on the Object instance
@@ -25,7 +27,7 @@ export class CsvFileReader {
       .map((row: string): string[] => {
         return row.split(',');
       })
-      .map((row: string[]): any => {
+      .map((row: string[]): MatchData => {
         // go through each individual 'row' and convert each 'value' inside of each of those 'rows' into correct type
         // row - 1 of the single rows
         // taking each value of 'row' of Strings and do some processing
