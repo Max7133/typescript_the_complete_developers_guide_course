@@ -1,16 +1,8 @@
 import { CsvFileReader } from './CsvFileReader';
+import { MatchResult } from './MatchResult';
 
 const reader = new CsvFileReader('football.csv');
 reader.read(); // read the file definition and assign it to 'data' Property
-
-// enum - enumeration
-// enum - because it's good use for a Collection of closly related Values
-// type: MatchResult
-enum MatchResult {
-  HomeWin = 'H',
-  AwayWin = 'A',
-  Draw = 'D',
-}
 
 let manUnitedWins = 0;
 // iterating through collection of matches
