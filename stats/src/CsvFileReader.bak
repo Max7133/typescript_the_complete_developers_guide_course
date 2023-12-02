@@ -27,26 +27,21 @@ export class CsvFileReader {
       .map((row: string): string[] => {
         return row.split(',');
       })
-      // go through each individual 'row' and convert each 'value' inside of each of those 'rows' into correct type
-      // row - 1 of the single rows
-      // taking each value of 'row' of Strings and do some processing
-      .map(this.mapRow); // passing in a reference to 'mapRow'
-  }
-
-  // helper function
-  // takes one row and converts the information inside of it and then return it
-  // takes in a single 'row' that is going to be an Array of Strings and it's going to return a 'MatchData' Tuple
-  mapRow(row: string[]): MatchData {
-    return [
-      dateStringToDate(row[0]),
-      row[1],
-      row[2],
-      parseInt(row[3]),
-      parseInt(row[4]),
-      // MatchResult (Enum Type)
-      // Type Assertion (overwriting TS default behavior) output: 'H', 'A', 'D'
-      row[5] as MatchResult,
-      row[6],
-    ];
+      .map((row: string[]): MatchData => {
+        // go through each individual 'row' and convert each 'value' inside of each of those 'rows' into correct type
+        // row - 1 of the single rows
+        // taking each value of 'row' of Strings and do some processing
+        return [
+          dateStringToDate(row[0]),
+          row[1],
+          row[2],
+          parseInt(row[3]),
+          parseInt(row[4]),
+          // MatchResult (Enum Type)
+          // Type Assertion (overwriting TS default behavior) output: 'H', 'A', 'D'
+          row[5] as MatchResult,
+          row[6],
+        ];
+      });
   }
 }
