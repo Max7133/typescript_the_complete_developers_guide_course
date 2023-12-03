@@ -1,7 +1,7 @@
-import { CsvFileReader } from './CsvFileReader';
+import { MatchReader } from './MatchReader';
 import { MatchResult } from './MatchResult';
 
-const reader = new CsvFileReader('football.csv');
+const reader = new MatchReader('football.csv');
 reader.read(); // read the file definition and assign it to 'data' Property
 
 let manUnitedWins = 0;
