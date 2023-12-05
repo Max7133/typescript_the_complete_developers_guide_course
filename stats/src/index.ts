@@ -1,12 +1,18 @@
 import { MatchReader } from './MatchReader';
+import { CsvFileReader } from './CsvFileReader';
 import { MatchResult } from './MatchResult';
 
-const reader = new MatchReader('football.csv');
-reader.read(); // read the file definition and assign it to 'data' Property
+// Create an Object that satisfies the 'DataReader' interface
+const csvFileReader = new CsvFileReader('football.csv');
+
+// Create an instance of MatchReader and pass in something that satisfies the 'DataReader' interface
+const matchReader = new MatchReader(csvFileReader);
+matchReader.load();
 
 let manUnitedWins = 0;
 // iterating through collection of matches
-for (let match of reader.data) {
+// matchReader.matches (the info it will iterate over to make the analysis)
+for (let match of matchReader.matches) {
   // MU won as home team
   if (match[1] === 'Man United' && match[5] === MatchResult.HomeWin) {
     manUnitedWins++;
