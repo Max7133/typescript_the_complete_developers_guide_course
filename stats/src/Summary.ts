@@ -15,4 +15,9 @@ export interface OutputTarget {
 // Passing in an Instance on an Object to use as the 'analyzer' and an Intance to use as the 'OutputTarget' as well
 export class Summary {
   constructor(public analyzer: Analyzer, public outputTarget: OutputTarget) {}
+
+  buildAndPrintReport(matches: MatchData[]): void {
+    const output = this.analyzer.run(matches); // list of 'matches', run() gives back a 'string' === actual report data
+    this.outputTarget.print(output);
+  }
 }
