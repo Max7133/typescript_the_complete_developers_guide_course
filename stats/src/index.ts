@@ -1,6 +1,8 @@
 import { MatchReader } from './MatchReader';
 import { CsvFileReader } from './CsvFileReader';
-import { MatchResult } from './MatchResult';
+import { ConsoleReport } from './reportTargets/ConsoleReport';
+import { WinsAnalysis } from './analyzers/WinsAnalysis';
+import { Summary } from './Summary';
 
 // Create an Object that satisfies the 'DataReader' interface
 const csvFileReader = new CsvFileReader('football.csv');
@@ -9,4 +11,13 @@ const csvFileReader = new CsvFileReader('football.csv');
 const matchReader = new MatchReader(csvFileReader);
 matchReader.load();
 
-console.log(`Man United won ${manUnitedWins} games`); // Man United won 18 games
+// Create an instance of 'Summary', 'WinsAnalysis' and 'ConsoleReport'
+// 'WinsAnalysis' and 'ConsoleReport' will be fed into 'Summary'
+
+// 1st Arg - Instance of the Analyzer which is WinsAnalysis (need to pass there the Name of the Team that I want to find the number of WINS for)
+const summary = new Summary(
+  new WinsAnalysis('Man United'),
+  new ConsoleReport()
+);
+
+summary.buildAndPrintReport(matchReader.matches); // Team Man United won 18 games
