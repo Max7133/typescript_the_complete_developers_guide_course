@@ -1,6 +1,7 @@
 import { dateStringToDate } from './utils';
 import { MatchResult } from './MatchResult';
 import { MatchData } from './MatchData';
+import { CsvFileReader } from './CsvFileReader';
 
 interface DataReader {
   read(): void;
@@ -8,6 +9,12 @@ interface DataReader {
 }
 
 export class MatchReader {
+  // this 'class' will always be created with the 'csvFileReader'
+  // arg - name of the CSV
+  // returns an Instance of 'MatchReader'
+  static fromCsv(filename: string): MatchReader {
+    return new MatchReader(new CsvFileReader(filename)); // returns a New 'MatchReader' that gets pre-configured with a 'CsvFileReader'
+  }
   matches: MatchData[] = [];
 
   // reader: DataReader; (Don't need this, because with using 'public' it will automatically define this as a Property on this 'class')
