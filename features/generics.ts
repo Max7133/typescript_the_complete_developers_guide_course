@@ -62,3 +62,33 @@ printAnything(['a', 'b', 'c']); // if I hover over, it will show "function print
 
 // example
 printAnything<string>([1, 2, 3]); // ERROR: Type 'number' is not assignable to type 'string'.
+
+////////// Generic Constraints
+class Car {
+  print() {
+    console.log('I am a car');
+  }
+}
+
+class House {
+  print() {
+    console.log('I am a house');
+  }
+}
+
+interface Printable {
+  print(): void;
+}
+
+// Generic Function that will take an Array of either Cars or Houses, loop through the Array, and then call the "print()" on each Element
+// <T extends Printable> - the Constraint, it will tell TS that whatever type <T> I put in here, it's going to have all the Properties that the Inteface Printable has
+function printHousesOrCars<T extends Printable>(arr: T[]): void {
+  for (let i = 0; i < arr.length; i++) {
+    // arr[i].print(); // error: because there might be a situation where I will call a "number" on a print(), and Numbers do not have a built in print()
+    arr[i].print(); // the error will go away after the Constaint
+  }
+}
+
+printHousesOrCars([1, 2, 3, 4]); // and only now it will show the Error here, because I pass in Number that do not have a built in print()
+printHousesOrCars<House>([new House(), new House()]); // no errors
+printHousesOrCars<Car>([new Car(), new Car()]); // no errors
