@@ -4,7 +4,17 @@ interface UserProps {
   age?: number;
 }
 
+// Type Alias for a Empty Function (no Arg and no return values)
+type Callback = () => {};
+
 export class User {
+  // Stores all the different Events that get registered
+  // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
+  // [key: string] - because I don't know yet what Properties this Object is going to have
+  // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
+  // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
+  events: { [key: string]: Callback[] } = {};
+
   constructor(private data: UserProps) {}
 
   // will be called with some propName - name of the property that I try to retrieve
@@ -19,4 +29,7 @@ export class User {
     // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
     Object.assign(this.data, update);
   }
+  // called with some 'eventName' of Event that is a String
+  // 2nd Arg - callback function
+  on(eventName: string, callback: Callback) {}
 }
