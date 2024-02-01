@@ -5,7 +5,7 @@ interface UserProps {
 }
 
 // Type Alias for a Empty Function (no Arg and no return values)
-type Callback = () => {};
+type Callback = () => void;
 
 export class User {
   // Stores all the different Events that get registered
@@ -31,5 +31,14 @@ export class User {
   }
   // called with some 'eventName' of Event that is a String
   // 2nd Arg - callback function
-  on(eventName: string, callback: Callback) {}
+  on(eventName: string, callback: Callback): void {
+    // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
+    // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
+    // either way 'handlers' is going to be an Array
+    const handlers = this.events[eventName] || [];
+    // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
+    handlers.push(callback);
+    // then it will take the 'handlers' Array and assign it back to 'this.events' Object
+    this.events[eventName] = handlers;
+  }
 }
