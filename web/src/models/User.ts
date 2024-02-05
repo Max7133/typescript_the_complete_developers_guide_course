@@ -41,4 +41,18 @@ export class User {
     // then it will take the 'handlers' Array and assign it back to 'this.events' Object
     this.events[eventName] = handlers;
   }
+
+  // will trigger all the different callbacks registered to some particular Event
+  trigger(eventName: string): void {
+    // checks if it has some registered events with this given 'eventName'
+    const handlers = this.events[eventName];
+    // if 'handlers' is defined and if it is an Array, then 'return' early
+    if (!handlers || handlers.length === 0) {
+      return;
+    }
+    // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
+    handlers.forEach((callback) => {
+      callback();
+    });
+  }
 }
