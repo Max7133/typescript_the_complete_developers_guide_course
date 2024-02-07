@@ -1,5 +1,20 @@
 import { User } from './models/User';
 
+// assigning an ID to an instance of User
+const user = new User({ id: 1 });
+
+user.fetch();
+
+setTimeout(() => {
+  console.log(user);
+}, 4000);
+
+/* // creating a new User
+// 2nd Arg - Object that represents the Properties that this User has
+axios.get('http://localhost:3000/users/2'); */
+
+/* import { User } from './models/User';
+
 const user = new User({ name: 'myname', age: 20 });
 
 // Update the 'name' and 'age'
@@ -24,4 +39,4 @@ user.on('save', () => {
 // console.log(user); // User {data: {…}, events: {…}} (inside 'events' there is a Key 'change' with 1 registed Function with it)
 
 // triggering Events
-user.trigger('change');
+user.trigger('change'); */
