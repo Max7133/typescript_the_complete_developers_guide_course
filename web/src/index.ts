@@ -3,11 +3,15 @@ import { User } from './models/User';
 // assigning an ID to an instance of User
 const user = new User({ id: 1 });
 
-user.fetch();
+// testing for updating the info of the particular User
+user.set({ name: 'NEW NAME', age: 35 });
 
-setTimeout(() => {
-  console.log(user);
-}, 4000);
+user.save();
+
+// testing for creating new User
+const newUser = new User({ name: 'new user', age: 0 });
+
+newUser.save();
 
 /* // creating a new User
 // 2nd Arg - Object that represents the Properties that this User has

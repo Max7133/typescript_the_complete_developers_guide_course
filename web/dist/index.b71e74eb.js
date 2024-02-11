@@ -584,10 +584,18 @@ var _user = require("./models/User");
 const user = new (0, _user.User)({
     id: 1
 });
-user.fetch();
-setTimeout(()=>{
-    console.log(user);
-}, 4000); /* // creating a new User
+// testing for updating the info of the particular User
+user.set({
+    name: "NEW NAME",
+    age: 35
+});
+user.save();
+// testing for creating new User
+const newUser = new (0, _user.User)({
+    name: "new user",
+    age: 0
+});
+newUser.save(); /* // creating a new User
 // 2nd Arg - Object that represents the Properties that this User has
 axios.get('http://localhost:3000/users/2'); */  /* import { User } from './models/User';
 
@@ -624,6 +632,7 @@ parcelHelpers.export(exports, "User", ()=>User);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
 class User {
+    // 'data' - has all the custom info about the User
     constructor(data){
         this.data = data;
         this.// Stores all the different Events that get registered
@@ -673,6 +682,16 @@ class User {
         (0, _axiosDefault.default).get(`http://localhost:3000/users/${this.get("id")}`).then((response)=>{
             this.set(response.data);
         });
+    }
+    // saves some data about the USer to the server
+    save() {
+        const id = this.get("id");
+        if (id) // if there is a User (updates the info of the User)
+        // 2nd Arg = data
+        (0, _axiosDefault.default).put(`http://localhost:3000/users/${id}`, this.data);
+        else // if there is no User
+        // 2nd Arg = data (all the info I want to send)
+        (0, _axiosDefault.default).post("http://localhost:3000/users", this.data);
     }
 }
 

@@ -18,6 +18,7 @@ export class User {
   // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
   events: { [key: string]: Callback[] } = {};
 
+  // 'data' - has all the custom info about the User
   constructor(private data: UserProps) {}
 
   // will be called with some propName - name of the property that I try to retrieve
@@ -66,5 +67,19 @@ export class User {
       .then((response: AxiosResponse): void => {
         this.set(response.data);
       });
+  }
+
+  // saves some data about the USer to the server
+  save(): void {
+    const id = this.get('id');
+    if (id) {
+      // if there is a User (updates the info of the User)
+      // 2nd Arg = data
+      axios.put(`http://localhost:3000/users/${id}`, this.data);
+    } else {
+      // if there is no User
+      // 2nd Arg = data (all the info I want to send)
+      axios.post('http://localhost:3000/users', this.data);
+    }
   }
 }
