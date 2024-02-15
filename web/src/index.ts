@@ -13,6 +13,13 @@ const newUser = new User({ name: 'new user', age: 0 });
 
 newUser.save();
 
+//
+user.events.on('change', () => {
+  console.log('change!');
+});
+
+user.events.trigger('change');
+
 /* // creating a new User
 // 2nd Arg - Object that represents the Properties that this User has
 axios.get('http://localhost:3000/users/2'); */

@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import { Eventing } from './Eventing';
 
 interface UserProps {
   // ? - it can have a 'name' or 'age' but not a must!
@@ -8,6 +9,8 @@ interface UserProps {
 }
 
 export class User {
+  public events: Eventing = new Eventing(); // type 'Eventing'
+
   // 'data' - has all the custom info about the User
   constructor(private data: UserProps) {}
 
