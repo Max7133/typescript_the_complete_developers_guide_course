@@ -1,7 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
 import { Eventing } from './Eventing';
 
-interface UserProps {
+export interface UserProps {
   // ? - it can have a 'name' or 'age' but not a must!
   id?: number;
   name?: string;
@@ -25,28 +24,5 @@ export class User {
     // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
     // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
     Object.assign(this.data, update);
-  }
-
-  fetch(): void {
-    // Get request (retrieve User with the given ID)
-    axios
-      .get(`http://localhost:3000/users/${this.get('id')}`)
-      .then((response: AxiosResponse): void => {
-        this.set(response.data);
-      });
-  }
-
-  // saves some data about the USer to the server
-  save(): void {
-    const id = this.get('id');
-    if (id) {
-      // if there is a User (updates the info of the User)
-      // 2nd Arg = data
-      axios.put(`http://localhost:3000/users/${id}`, this.data);
-    } else {
-      // if there is no User
-      // 2nd Arg = data (all the info I want to send)
-      axios.post('http://localhost:3000/users', this.data);
-    }
   }
 }
