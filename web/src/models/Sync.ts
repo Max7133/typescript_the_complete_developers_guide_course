@@ -1,7 +1,11 @@
 import axios, { AxiosPromise } from 'axios';
-import { UserProps } from './User';
 
-export class sync {
+interface HasId {
+  id: number;
+}
+
+// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
+export class sync<T extends HasId> {
   // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
   constructor(public rootUrl: string) {}
 
@@ -14,7 +18,7 @@ export class sync {
 
   // saves some data about the User to the server
   // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
-  save(data: UserProps): AxiosPromise {
+  save(data: T): AxiosPromise {
     //const id = data.id;
     const { id } = data;
 
