@@ -5,7 +5,7 @@ interface HasId {
 }
 
 // extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
-export class sync<T extends HasId> {
+export class Sync<T extends HasId> {
   // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
   constructor(public rootUrl: string) {}
 
