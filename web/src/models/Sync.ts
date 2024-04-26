@@ -1,7 +1,7 @@
 import axios, { AxiosPromise } from 'axios';
 
 interface HasId {
-  id: number;
+  id?: number;
 }
 
 // extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'

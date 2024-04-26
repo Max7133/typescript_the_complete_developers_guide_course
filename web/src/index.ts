@@ -1,24 +1,24 @@
 import { User } from './models/User';
 
 // assigning an ID to an instance of User
-const user = new User({ id: 1 });
+//const user = new User({ id: 1 });
 
 // testing for updating the info of the particular User
-user.set({ name: 'NEW NAME', age: 35 });
+//user.set({ name: 'NEW NAME', age: 35 });
 
-user.save();
+//user.save();
 
 // testing for creating new User
-const newUser = new User({ name: 'new user', age: 0 });
+//const newUser = new User({ name: 'new user', age: 0 });
 
-newUser.save();
+//newUser.save();
 
 //
-user.events.on('change', () => {
+/* user.events.on('change', () => {
   console.log('change!');
 });
 
-user.events.trigger('change');
+user.events.trigger('change'); */
 
 /* // creating a new User
 // 2nd Arg - Object that represents the Properties that this User has
