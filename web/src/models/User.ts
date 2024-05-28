@@ -22,4 +22,16 @@ export class User {
   constructor(attrs: UserProps) {
     this.attributes = new Attributes<UserProps>(attrs);
   }
+  // takes Arguments, returns directly the 'on' function from 'this.events'
+  get on() {
+    return this.events.on; // because this is a 'getter', I don't need to call the 'on' method, instead, I'm returning a reference to the 'events' Method
+  }
+
+  get trigger() {
+    return this.events.trigger;
+  }
+
+  get get() {
+    return this.attributes.get;
+  }
 }
