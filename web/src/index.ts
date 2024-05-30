@@ -54,7 +54,10 @@ user.trigger('change'); */
 
 // taking all the 'attributes' this User has and then save them to the JSON server
 const user = new User({ name: 'new record', age: 0 });
+console.log(user.get('name')); // new record
 
 user.on('change', () => {
-  console.log('user was changed');
-}); // returns the 'on' Function from the 'Eventing' class.
+  console.log('User was changed');
+});
+
+user.trigger('change'); // User was changed

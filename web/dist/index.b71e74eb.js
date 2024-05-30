@@ -142,15 +142,16 @@
       this[globalName] = mainExports;
     }
   }
-})({"aHFy6":[function(require,module,exports) {
+})({"fm8Gy":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
+var HMR_USE_SSE = false;
 module.bundle.HMR_BUNDLE_ID = "5c1b77e3b71e74eb";
 "use strict";
-/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
+/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, HMR_USE_SSE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
   HMRAsset,
   HMRMessage,
@@ -189,6 +190,7 @@ declare var HMR_HOST: string;
 declare var HMR_PORT: string;
 declare var HMR_ENV_HASH: string;
 declare var HMR_SECURE: boolean;
+declare var HMR_USE_SSE: boolean;
 declare var chrome: ExtensionContext;
 declare var browser: ExtensionContext;
 declare var __parcel__import__: (string) => Promise<void>;
@@ -232,7 +234,8 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
         "0.0.0.0"
     ].includes(hostname) ? "wss" : "ws";
     var ws;
-    try {
+    if (HMR_USE_SSE) ws = new EventSource("/__parcel_hmr");
+    else try {
         ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/");
     } catch (err) {
         if (err.message) console.error(err.message);
@@ -302,12 +305,14 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
             }
         }
     };
-    ws.onerror = function(e) {
-        if (e.message) console.error(e.message);
-    };
-    ws.onclose = function() {
-        console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
-    };
+    if (ws instanceof WebSocket) {
+        ws.onerror = function(e) {
+            if (e.message) console.error(e.message);
+        };
+        ws.onclose = function() {
+            console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
+        };
+    }
 }
 function removeErrorOverlay() {
     var overlay = document.getElementById(OVERLAY_ID);
@@ -581,28 +586,21 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 },{}],"h7u1C":[function(require,module,exports) {
 var _user = require("./models/User");
 // assigning an ID to an instance of User
-const user = new (0, _user.User)({
-    id: 1
-});
+//const user = new User({ id: 1 });
 // testing for updating the info of the particular User
-user.set({
-    name: "NEW NAME",
-    age: 35
-});
-user.save();
+//user.set({ name: 'NEW NAME', age: 35 });
+//user.save();
 // testing for creating new User
-const newUser = new (0, _user.User)({
-    name: "new user",
-    age: 0
-});
-newUser.save();
+//const newUser = new User({ name: 'new user', age: 0 });
+//newUser.save();
 //
-user.events.on("change", ()=>{
-    console.log("change!");
+/* user.events.on('change', () => {
+  console.log('change!');
 });
-user.events.trigger("change"); /* // creating a new User
+
+user.events.trigger('change'); */ /* // creating a new User
 // 2nd Arg - Object that represents the Properties that this User has
-axios.get('http://localhost:3000/users/2'); */  /* import { User } from './models/User';
+axios.get('http://localhost:3000/users/2'); */ /* import { User } from './models/User';
 
 const user = new User({ name: 'myname', age: 20 });
 
@@ -628,52 +626,150 @@ user.on('save', () => {
 // console.log(user); // User {data: {…}, events: {…}} (inside 'events' there is a Key 'change' with 1 registed Function with it)
 
 // triggering Events
-user.trigger('change'); */ 
+user.trigger('change'); */ // taking all the 'attributes' this User has and then save them to the JSON server
+const user = new (0, _user.User)({
+    name: "new record",
+    age: 0
+});
+console.log(user.get("name")); // new record
+user.on("change", ()=>{
+    console.log("User was changed");
+});
+user.trigger("change"); // User was changed
 
 },{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "User", ()=>User);
-var _axios = require("axios");
-var _axiosDefault = parcelHelpers.interopDefault(_axios);
 var _eventing = require("./Eventing");
+var _sync = require("./Sync");
+var _attributes = require("./Attributes");
+const rootUrl = "http://localhost:3000/users";
 class User {
-    // 'data' - has all the custom info about the User
-    constructor(data){
-        this.data = data;
-        this.events = new (0, _eventing.Eventing)();
+    // receives starting 'attributes' for the User
+    constructor(attrs){
+        this.events = new (0, _eventing.Eventing)() // type 'Eventing'
+        ;
+        // Whenever an instance of a User is created, it's going to get Public Property 'sync' that's going to an instance of the Sync class, where the intefrace 'UserProps' is going to be used
+        this.sync = new (0, _sync.Sync)(rootUrl) // whenever an instance of 'sync' is created, a URL needs to be passed to use it as the root URL
+        ;
+        this.attributes = new (0, _attributes.Attributes)(attrs);
     }
-    // will be called with some propName - name of the property that I try to retrieve
-    get(propName) {
-        return this.data[propName];
+    // takes Arguments, returns directly the 'on' function from 'this.events'
+    get on() {
+        return this.events.on; // because this is a 'getter', I don't need to call the 'on' method, instead, I'm returning a reference to the 'events' Method
     }
-    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
-    set(update) {
-        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
-        // data - is the Object that records all the information about a particular User
-        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
-        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
-        Object.assign(this.data, update);
+    get trigger() {
+        return this.events.trigger;
     }
-    fetch() {
-        // Get request (retrieve User with the given ID)
-        (0, _axiosDefault.default).get(`http://localhost:3000/users/${this.get("id")}`).then((response)=>{
-            this.set(response.data);
-        });
-    }
-    // saves some data about the USer to the server
-    save() {
-        const id = this.get("id");
-        if (id) // if there is a User (updates the info of the User)
-        // 2nd Arg = data
-        (0, _axiosDefault.default).put(`http://localhost:3000/users/${id}`, this.data);
-        else // if there is no User
-        // 2nd Arg = data (all the info I want to send)
-        (0, _axiosDefault.default).post("http://localhost:3000/users", this.data);
+    get get() {
+        return this.attributes.get;
     }
 }
 
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./Eventing":"7459s"}],"jo6P5":[function(require,module,exports) {
+},{"./Eventing":"7459s","./Sync":"QO3Gl","./Attributes":"6Bbds","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
+// Type Alias for a Empty Function (no Arg and no return values)
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// class responsible for handling all the different Events tied to a User
+parcelHelpers.export(exports, "Eventing", ()=>Eventing);
+class Eventing {
+    constructor(){
+        // Stores all the different Events that get registered
+        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
+        // [key: string] - because I don't know yet what Properties this Object is going to have
+        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
+        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
+        this.events = {};
+        // called with some 'eventName' of Event that is a String
+        // 2nd Arg - callback function
+        this.on = (eventName, callback)=>{
+            // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
+            // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
+            // either way 'handlers' is going to be an Array
+            const handlers = this.events[eventName] || [];
+            // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
+            handlers.push(callback);
+            // then it will take the 'handlers' Array and assign it back to 'this.events' Object
+            this.events[eventName] = handlers;
+        };
+        // will trigger all the different callbacks registered to some particular Event
+        this.trigger = (eventName)=>{
+            // checks if it has some registered events with this given 'eventName'
+            const handlers = this.events[eventName];
+            // if 'handlers' is defined and if it is an Array, then 'return' early
+            if (!handlers || handlers.length === 0) return;
+            // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
+            handlers.forEach((callback)=>{
+                callback();
+            });
+        };
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"QO3Gl":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
+parcelHelpers.export(exports, "Sync", ()=>Sync);
+var _axios = require("axios");
+var _axiosDefault = parcelHelpers.interopDefault(_axios);
+class Sync {
+    // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
+    constructor(rootUrl){
+        this.rootUrl = rootUrl;
+    }
+    // whenever I call fetch, it must be called with an ID that has to be a number
+    // return AxiosPromise because when I call Axios, I get back a promise and it is a promise that is implemented by the Axios library
+    fetch(id) {
+        // Get request (retrieve User with the given ID)
+        return (0, _axiosDefault.default).get(`${this.rootUrl}/${id}`);
+    }
+    // saves some data about the User to the server
+    // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
+    save(data) {
+        //const id = data.id;
+        const { id } = data;
+        if (id) // if there is a User (updates the info of the User)
+        // 2nd Arg = data
+        return (0, _axiosDefault.default).put(`${this.rootUrl}/${id}`, data);
+        else // if there is no User
+        // 2nd Arg = data (all the info I want to send)
+        return (0, _axiosDefault.default).post(this.rootUrl, data);
+    }
+}
+
+},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
@@ -949,6 +1045,12 @@ const typeOfTest = (type)=>(thing)=>typeof thing === type;
  *
  * @returns {boolean} True if value is a URLSearchParams object, otherwise false
  */ const isURLSearchParams = kindOfTest("URLSearchParams");
+const [isReadableStream, isRequest, isResponse, isHeaders] = [
+    "ReadableStream",
+    "Request",
+    "Response",
+    "Headers"
+].map(kindOfTest);
 /**
  * Trim excess whitespace off the beginning and end of a string
  *
@@ -1243,8 +1345,7 @@ const toObjectSet = (arrayOrString, delimiter)=>{
 };
 const noop = ()=>{};
 const toFiniteNumber = (value, defaultValue)=>{
-    value = +value;
-    return Number.isFinite(value) ? value : defaultValue;
+    return value != null && Number.isFinite(value = +value) ? value : defaultValue;
 };
 const ALPHA = "abcdefghijklmnopqrstuvwxyz";
 const DIGIT = "0123456789";
@@ -1301,6 +1402,10 @@ exports.default = {
     isBoolean,
     isObject,
     isPlainObject,
+    isReadableStream,
+    isRequest,
+    isResponse,
+    isHeaders,
     isUndefined,
     isDate,
     isFile,
@@ -1355,37 +1460,7 @@ function bind(fn, thisArg) {
     };
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"cpqD8":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cpqD8":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _utilsJs = require("./../utils.js");
@@ -1436,8 +1511,12 @@ const validators = (0, _validatorJsDefault.default).validators;
                 Error.captureStackTrace ? Error.captureStackTrace(dummy = {}) : dummy = new Error();
                 // slice off the Error: ... line
                 const stack = dummy.stack ? dummy.stack.replace(/^.+\n/, "") : "";
-                if (!err.stack) err.stack = stack;
-                else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ""))) err.stack += "\n" + stack;
+                try {
+                    if (!err.stack) err.stack = stack;
+                    else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ""))) err.stack += "\n" + stack;
+                } catch (e) {
+                // ignore the case where "stack" is an un-writable property
+                }
             }
             throw err;
         }
@@ -1628,7 +1707,7 @@ var _toFormDataJsDefault = parcelHelpers.interopDefault(_toFormDataJs);
         ")": "%29",
         "~": "%7E",
         "%20": "+",
-        "%00": "\x00"
+        "%00": "\0"
     };
     return encodeURIComponent(str).replace(/[!'()~]|%20|%00/g, function replacer(match) {
         return charMap[match];
@@ -3696,7 +3775,8 @@ const defaults = {
     transitional: (0, _transitionalJsDefault.default),
     adapter: [
         "xhr",
-        "http"
+        "http",
+        "fetch"
     ],
     transformRequest: [
         function transformRequest(data, headers) {
@@ -3706,7 +3786,7 @@ const defaults = {
             if (isObjectPayload && (0, _utilsJsDefault.default).isHTMLForm(data)) data = new FormData(data);
             const isFormData = (0, _utilsJsDefault.default).isFormData(data);
             if (isFormData) return hasJSONContentType ? JSON.stringify((0, _formDataToJSONJsDefault.default)(data)) : data;
-            if ((0, _utilsJsDefault.default).isArrayBuffer(data) || (0, _utilsJsDefault.default).isBuffer(data) || (0, _utilsJsDefault.default).isStream(data) || (0, _utilsJsDefault.default).isFile(data) || (0, _utilsJsDefault.default).isBlob(data)) return data;
+            if ((0, _utilsJsDefault.default).isArrayBuffer(data) || (0, _utilsJsDefault.default).isBuffer(data) || (0, _utilsJsDefault.default).isStream(data) || (0, _utilsJsDefault.default).isFile(data) || (0, _utilsJsDefault.default).isBlob(data) || (0, _utilsJsDefault.default).isReadableStream(data)) return data;
             if ((0, _utilsJsDefault.default).isArrayBufferView(data)) return data.buffer;
             if ((0, _utilsJsDefault.default).isURLSearchParams(data)) {
                 headers.setContentType("application/x-www-form-urlencoded;charset=utf-8", false);
@@ -3734,6 +3814,7 @@ const defaults = {
             const transitional = this.transitional || defaults.transitional;
             const forcedJSONParsing = transitional && transitional.forcedJSONParsing;
             const JSONRequested = this.responseType === "json";
+            if ((0, _utilsJsDefault.default).isResponse(data) || (0, _utilsJsDefault.default).isReadableStream(data)) return data;
             if (data && (0, _utilsJsDefault.default).isString(data) && (forcedJSONParsing && !this.responseType || JSONRequested)) {
                 const silentJSONParsing = transitional && transitional.silentJSONParsing;
                 const strictJSONParsing = !silentJSONParsing && JSONRequested;
@@ -3879,6 +3960,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "hasBrowserEnv", ()=>hasBrowserEnv);
 parcelHelpers.export(exports, "hasStandardBrowserWebWorkerEnv", ()=>hasStandardBrowserWebWorkerEnv);
 parcelHelpers.export(exports, "hasStandardBrowserEnv", ()=>hasStandardBrowserEnv);
+parcelHelpers.export(exports, "origin", ()=>origin);
 const hasBrowserEnv = typeof window !== "undefined" && typeof document !== "undefined";
 /**
  * Determine if we're running in a standard browser environment
@@ -3915,6 +3997,7 @@ const hasBrowserEnv = typeof window !== "undefined" && typeof document !== "unde
     return typeof WorkerGlobalScope !== "undefined" && // eslint-disable-next-line no-undef
     self instanceof WorkerGlobalScope && typeof self.importScripts === "function";
 })();
+const origin = hasBrowserEnv && window.location.href || "http://localhost";
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"01RfH":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -4058,6 +4141,7 @@ class AxiosHeaders {
         const setHeaders = (headers, _rewrite)=>(0, _utilsJsDefault.default).forEach(headers, (_value, _header)=>setHeader(_value, _header, _rewrite));
         if ((0, _utilsJsDefault.default).isPlainObject(header) || header instanceof this.constructor) setHeaders(header, valueOrRewrite);
         else if ((0, _utilsJsDefault.default).isString(header) && (header = header.trim()) && !isValidHeaderName(header)) setHeaders((0, _parseHeadersJsDefault.default)(header), valueOrRewrite);
+        else if ((0, _utilsJsDefault.default).isHeaders(header)) for (const [key, value] of header.entries())setHeader(value, key, rewrite);
         else header != null && setHeader(valueOrRewrite, header, rewrite);
         return this;
     }
@@ -4299,11 +4383,14 @@ var _httpJs = require("./http.js");
 var _httpJsDefault = parcelHelpers.interopDefault(_httpJs);
 var _xhrJs = require("./xhr.js");
 var _xhrJsDefault = parcelHelpers.interopDefault(_xhrJs);
+var _fetchJs = require("./fetch.js");
+var _fetchJsDefault = parcelHelpers.interopDefault(_fetchJs);
 var _axiosErrorJs = require("../core/AxiosError.js");
 var _axiosErrorJsDefault = parcelHelpers.interopDefault(_axiosErrorJs);
 const knownAdapters = {
     http: (0, _httpJsDefault.default),
-    xhr: (0, _xhrJsDefault.default)
+    xhr: (0, _xhrJsDefault.default),
+    fetch: (0, _fetchJsDefault.default)
 };
 (0, _utilsJsDefault.default).forEach(knownAdapters, (fn, value)=>{
     if (fn) {
@@ -4351,21 +4438,13 @@ exports.default = {
     adapters: knownAdapters
 };
 
-},{"../utils.js":"5By4s","./http.js":"aFlee","./xhr.js":"ldm57","../core/AxiosError.js":"3u8Tl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ldm57":[function(require,module,exports) {
+},{"../utils.js":"5By4s","./http.js":"aFlee","./xhr.js":"ldm57","./fetch.js":"lVBFV","../core/AxiosError.js":"3u8Tl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ldm57":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _utilsJs = require("./../utils.js");
 var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
 var _settleJs = require("./../core/settle.js");
 var _settleJsDefault = parcelHelpers.interopDefault(_settleJs);
-var _cookiesJs = require("./../helpers/cookies.js");
-var _cookiesJsDefault = parcelHelpers.interopDefault(_cookiesJs);
-var _buildURLJs = require("./../helpers/buildURL.js");
-var _buildURLJsDefault = parcelHelpers.interopDefault(_buildURLJs);
-var _buildFullPathJs = require("../core/buildFullPath.js");
-var _buildFullPathJsDefault = parcelHelpers.interopDefault(_buildFullPathJs);
-var _isURLSameOriginJs = require("./../helpers/isURLSameOrigin.js");
-var _isURLSameOriginJsDefault = parcelHelpers.interopDefault(_isURLSameOriginJs);
 var _transitionalJs = require("../defaults/transitional.js");
 var _transitionalJsDefault = parcelHelpers.interopDefault(_transitionalJs);
 var _axiosErrorJs = require("../core/AxiosError.js");
@@ -4378,66 +4457,26 @@ var _indexJs = require("../platform/index.js");
 var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
 var _axiosHeadersJs = require("../core/AxiosHeaders.js");
 var _axiosHeadersJsDefault = parcelHelpers.interopDefault(_axiosHeadersJs);
-var _speedometerJs = require("../helpers/speedometer.js");
-var _speedometerJsDefault = parcelHelpers.interopDefault(_speedometerJs);
-"use strict";
-function progressEventReducer(listener, isDownloadStream) {
-    let bytesNotified = 0;
-    const _speedometer = (0, _speedometerJsDefault.default)(50, 250);
-    return (e)=>{
-        const loaded = e.loaded;
-        const total = e.lengthComputable ? e.total : undefined;
-        const progressBytes = loaded - bytesNotified;
-        const rate = _speedometer(progressBytes);
-        const inRange = loaded <= total;
-        bytesNotified = loaded;
-        const data = {
-            loaded,
-            total,
-            progress: total ? loaded / total : undefined,
-            bytes: progressBytes,
-            rate: rate ? rate : undefined,
-            estimated: rate && total && inRange ? (total - loaded) / rate : undefined,
-            event: e
-        };
-        data[isDownloadStream ? "download" : "upload"] = true;
-        listener(data);
-    };
-}
+var _progressEventReducerJs = require("../helpers/progressEventReducer.js");
+var _progressEventReducerJsDefault = parcelHelpers.interopDefault(_progressEventReducerJs);
+var _resolveConfigJs = require("../helpers/resolveConfig.js");
+var _resolveConfigJsDefault = parcelHelpers.interopDefault(_resolveConfigJs);
 const isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
 exports.default = isXHRAdapterSupported && function(config) {
     return new Promise(function dispatchXhrRequest(resolve, reject) {
-        let requestData = config.data;
-        const requestHeaders = (0, _axiosHeadersJsDefault.default).from(config.headers).normalize();
-        let { responseType, withXSRFToken } = config;
+        const _config = (0, _resolveConfigJsDefault.default)(config);
+        let requestData = _config.data;
+        const requestHeaders = (0, _axiosHeadersJsDefault.default).from(_config.headers).normalize();
+        let { responseType } = _config;
         let onCanceled;
         function done() {
-            if (config.cancelToken) config.cancelToken.unsubscribe(onCanceled);
-            if (config.signal) config.signal.removeEventListener("abort", onCanceled);
-        }
-        let contentType;
-        if ((0, _utilsJsDefault.default).isFormData(requestData)) {
-            if ((0, _indexJsDefault.default).hasStandardBrowserEnv || (0, _indexJsDefault.default).hasStandardBrowserWebWorkerEnv) requestHeaders.setContentType(false); // Let the browser set it
-            else if ((contentType = requestHeaders.getContentType()) !== false) {
-                // fix semicolon duplication issue for ReactNative FormData implementation
-                const [type, ...tokens] = contentType ? contentType.split(";").map((token)=>token.trim()).filter(Boolean) : [];
-                requestHeaders.setContentType([
-                    type || "multipart/form-data",
-                    ...tokens
-                ].join("; "));
-            }
+            if (_config.cancelToken) _config.cancelToken.unsubscribe(onCanceled);
+            if (_config.signal) _config.signal.removeEventListener("abort", onCanceled);
         }
         let request = new XMLHttpRequest();
-        // HTTP basic authentication
-        if (config.auth) {
-            const username = config.auth.username || "";
-            const password = config.auth.password ? unescape(encodeURIComponent(config.auth.password)) : "";
-            requestHeaders.set("Authorization", "Basic " + btoa(username + ":" + password));
-        }
-        const fullPath = (0, _buildFullPathJsDefault.default)(config.baseURL, config.url);
-        request.open(config.method.toUpperCase(), (0, _buildURLJsDefault.default)(fullPath, config.params, config.paramsSerializer), true);
+        request.open(_config.method.toUpperCase(), _config.url, true);
         // Set the request timeout in MS
-        request.timeout = config.timeout;
+        request.timeout = _config.timeout;
         function onloadend() {
             if (!request) return;
             // Prepare the response
@@ -4478,7 +4517,7 @@ exports.default = isXHRAdapterSupported && function(config) {
         // Handle browser request cancellation (as opposed to a manual cancellation)
         request.onabort = function handleAbort() {
             if (!request) return;
-            reject(new (0, _axiosErrorJsDefault.default)("Request aborted", (0, _axiosErrorJsDefault.default).ECONNABORTED, config, request));
+            reject(new (0, _axiosErrorJsDefault.default)("Request aborted", (0, _axiosErrorJsDefault.default).ECONNABORTED, _config, request));
             // Clean up request
             request = null;
         };
@@ -4486,30 +4525,19 @@ exports.default = isXHRAdapterSupported && function(config) {
         request.onerror = function handleError() {
             // Real errors are hidden from us by the browser
             // onerror should only fire if it's a network error
-            reject(new (0, _axiosErrorJsDefault.default)("Network Error", (0, _axiosErrorJsDefault.default).ERR_NETWORK, config, request));
+            reject(new (0, _axiosErrorJsDefault.default)("Network Error", (0, _axiosErrorJsDefault.default).ERR_NETWORK, _config, request));
             // Clean up request
             request = null;
         };
         // Handle timeout
         request.ontimeout = function handleTimeout() {
-            let timeoutErrorMessage = config.timeout ? "timeout of " + config.timeout + "ms exceeded" : "timeout exceeded";
-            const transitional = config.transitional || (0, _transitionalJsDefault.default);
-            if (config.timeoutErrorMessage) timeoutErrorMessage = config.timeoutErrorMessage;
-            reject(new (0, _axiosErrorJsDefault.default)(timeoutErrorMessage, transitional.clarifyTimeoutError ? (0, _axiosErrorJsDefault.default).ETIMEDOUT : (0, _axiosErrorJsDefault.default).ECONNABORTED, config, request));
+            let timeoutErrorMessage = _config.timeout ? "timeout of " + _config.timeout + "ms exceeded" : "timeout exceeded";
+            const transitional = _config.transitional || (0, _transitionalJsDefault.default);
+            if (_config.timeoutErrorMessage) timeoutErrorMessage = _config.timeoutErrorMessage;
+            reject(new (0, _axiosErrorJsDefault.default)(timeoutErrorMessage, transitional.clarifyTimeoutError ? (0, _axiosErrorJsDefault.default).ETIMEDOUT : (0, _axiosErrorJsDefault.default).ECONNABORTED, _config, request));
             // Clean up request
             request = null;
         };
-        // Add xsrf header
-        // This is only done if running in a standard browser environment.
-        // Specifically not if we're in a web worker, or react-native.
-        if ((0, _indexJsDefault.default).hasStandardBrowserEnv) {
-            withXSRFToken && (0, _utilsJsDefault.default).isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(config));
-            if (withXSRFToken || withXSRFToken !== false && (0, _isURLSameOriginJsDefault.default)(fullPath)) {
-                // Add xsrf header
-                const xsrfValue = config.xsrfHeaderName && config.xsrfCookieName && (0, _cookiesJsDefault.default).read(config.xsrfCookieName);
-                if (xsrfValue) requestHeaders.set(config.xsrfHeaderName, xsrfValue);
-            }
-        }
         // Remove Content-Type if data is undefined
         requestData === undefined && requestHeaders.setContentType(null);
         // Add headers to the request
@@ -4517,14 +4545,14 @@ exports.default = isXHRAdapterSupported && function(config) {
             request.setRequestHeader(key, val);
         });
         // Add withCredentials to request if needed
-        if (!(0, _utilsJsDefault.default).isUndefined(config.withCredentials)) request.withCredentials = !!config.withCredentials;
+        if (!(0, _utilsJsDefault.default).isUndefined(_config.withCredentials)) request.withCredentials = !!_config.withCredentials;
         // Add responseType to request if needed
-        if (responseType && responseType !== "json") request.responseType = config.responseType;
+        if (responseType && responseType !== "json") request.responseType = _config.responseType;
         // Handle progress if needed
-        if (typeof config.onDownloadProgress === "function") request.addEventListener("progress", progressEventReducer(config.onDownloadProgress, true));
+        if (typeof _config.onDownloadProgress === "function") request.addEventListener("progress", (0, _progressEventReducerJsDefault.default)(_config.onDownloadProgress, true));
         // Not all browsers support upload events
-        if (typeof config.onUploadProgress === "function" && request.upload) request.upload.addEventListener("progress", progressEventReducer(config.onUploadProgress));
-        if (config.cancelToken || config.signal) {
+        if (typeof _config.onUploadProgress === "function" && request.upload) request.upload.addEventListener("progress", (0, _progressEventReducerJsDefault.default)(_config.onUploadProgress));
+        if (_config.cancelToken || _config.signal) {
             // Handle cancellation
             // eslint-disable-next-line func-names
             onCanceled = (cancel)=>{
@@ -4533,10 +4561,10 @@ exports.default = isXHRAdapterSupported && function(config) {
                 request.abort();
                 request = null;
             };
-            config.cancelToken && config.cancelToken.subscribe(onCanceled);
-            if (config.signal) config.signal.aborted ? onCanceled() : config.signal.addEventListener("abort", onCanceled);
+            _config.cancelToken && _config.cancelToken.subscribe(onCanceled);
+            if (_config.signal) _config.signal.aborted ? onCanceled() : _config.signal.addEventListener("abort", onCanceled);
         }
-        const protocol = (0, _parseProtocolJsDefault.default)(fullPath);
+        const protocol = (0, _parseProtocolJsDefault.default)(_config.url);
         if (protocol && (0, _indexJsDefault.default).protocols.indexOf(protocol) === -1) {
             reject(new (0, _axiosErrorJsDefault.default)("Unsupported protocol " + protocol + ":", (0, _axiosErrorJsDefault.default).ERR_BAD_REQUEST, config));
             return;
@@ -4546,7 +4574,7 @@ exports.default = isXHRAdapterSupported && function(config) {
     });
 };
 
-},{"./../utils.js":"5By4s","./../core/settle.js":"dD9aC","./../helpers/cookies.js":"4WJjt","./../helpers/buildURL.js":"3bwC2","../core/buildFullPath.js":"1I5TW","./../helpers/isURLSameOrigin.js":"lxXtv","../defaults/transitional.js":"lM32f","../core/AxiosError.js":"3u8Tl","../cancel/CanceledError.js":"9PwCG","../helpers/parseProtocol.js":"7NfWU","../platform/index.js":"7tDev","../core/AxiosHeaders.js":"cgSSx","../helpers/speedometer.js":"gQeo1","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dD9aC":[function(require,module,exports) {
+},{"./../utils.js":"5By4s","./../core/settle.js":"dD9aC","../defaults/transitional.js":"lM32f","../core/AxiosError.js":"3u8Tl","../cancel/CanceledError.js":"9PwCG","../helpers/parseProtocol.js":"7NfWU","../platform/index.js":"7tDev","../core/AxiosHeaders.js":"cgSSx","../helpers/progressEventReducer.js":"bN9Fp","../helpers/resolveConfig.js":"l0e6d","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dD9aC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>settle);
@@ -4562,7 +4590,228 @@ function settle(resolve, reject, response) {
     ][Math.floor(response.status / 100) - 4], response.config, response.request, response));
 }
 
-},{"./AxiosError.js":"3u8Tl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4WJjt":[function(require,module,exports) {
+},{"./AxiosError.js":"3u8Tl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7NfWU":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>parseProtocol);
+"use strict";
+function parseProtocol(url) {
+    const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
+    return match && match[1] || "";
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bN9Fp":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _speedometerJs = require("./speedometer.js");
+var _speedometerJsDefault = parcelHelpers.interopDefault(_speedometerJs);
+var _throttleJs = require("./throttle.js");
+var _throttleJsDefault = parcelHelpers.interopDefault(_throttleJs);
+exports.default = (listener, isDownloadStream, freq = 3)=>{
+    let bytesNotified = 0;
+    const _speedometer = (0, _speedometerJsDefault.default)(50, 250);
+    return (0, _throttleJsDefault.default)((e)=>{
+        const loaded = e.loaded;
+        const total = e.lengthComputable ? e.total : undefined;
+        const progressBytes = loaded - bytesNotified;
+        const rate = _speedometer(progressBytes);
+        const inRange = loaded <= total;
+        bytesNotified = loaded;
+        const data = {
+            loaded,
+            total,
+            progress: total ? loaded / total : undefined,
+            bytes: progressBytes,
+            rate: rate ? rate : undefined,
+            estimated: rate && total && inRange ? (total - loaded) / rate : undefined,
+            event: e,
+            lengthComputable: total != null
+        };
+        data[isDownloadStream ? "download" : "upload"] = true;
+        listener(data);
+    }, freq);
+};
+
+},{"./speedometer.js":"gQeo1","./throttle.js":"6fmRS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gQeo1":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+"use strict";
+/**
+ * Calculate data maxRate
+ * @param {Number} [samplesCount= 10]
+ * @param {Number} [min= 1000]
+ * @returns {Function}
+ */ function speedometer(samplesCount, min) {
+    samplesCount = samplesCount || 10;
+    const bytes = new Array(samplesCount);
+    const timestamps = new Array(samplesCount);
+    let head = 0;
+    let tail = 0;
+    let firstSampleTS;
+    min = min !== undefined ? min : 1000;
+    return function push(chunkLength) {
+        const now = Date.now();
+        const startedAt = timestamps[tail];
+        if (!firstSampleTS) firstSampleTS = now;
+        bytes[head] = chunkLength;
+        timestamps[head] = now;
+        let i = tail;
+        let bytesCount = 0;
+        while(i !== head){
+            bytesCount += bytes[i++];
+            i = i % samplesCount;
+        }
+        head = (head + 1) % samplesCount;
+        if (head === tail) tail = (tail + 1) % samplesCount;
+        if (now - firstSampleTS < min) return;
+        const passed = startedAt && now - startedAt;
+        return passed ? Math.round(bytesCount * 1000 / passed) : undefined;
+    };
+}
+exports.default = speedometer;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6fmRS":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+"use strict";
+/**
+ * Throttle decorator
+ * @param {Function} fn
+ * @param {Number} freq
+ * @return {Function}
+ */ function throttle(fn, freq) {
+    let timestamp = 0;
+    const threshold = 1000 / freq;
+    let timer = null;
+    return function throttled() {
+        const force = this === true;
+        const now = Date.now();
+        if (force || now - timestamp > threshold) {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+            timestamp = now;
+            return fn.apply(null, arguments);
+        }
+        if (!timer) timer = setTimeout(()=>{
+            timer = null;
+            timestamp = Date.now();
+            return fn.apply(null, arguments);
+        }, threshold - (now - timestamp));
+    };
+}
+exports.default = throttle;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"l0e6d":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../platform/index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+var _utilsJs = require("../utils.js");
+var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
+var _isURLSameOriginJs = require("./isURLSameOrigin.js");
+var _isURLSameOriginJsDefault = parcelHelpers.interopDefault(_isURLSameOriginJs);
+var _cookiesJs = require("./cookies.js");
+var _cookiesJsDefault = parcelHelpers.interopDefault(_cookiesJs);
+var _buildFullPathJs = require("../core/buildFullPath.js");
+var _buildFullPathJsDefault = parcelHelpers.interopDefault(_buildFullPathJs);
+var _mergeConfigJs = require("../core/mergeConfig.js");
+var _mergeConfigJsDefault = parcelHelpers.interopDefault(_mergeConfigJs);
+var _axiosHeadersJs = require("../core/AxiosHeaders.js");
+var _axiosHeadersJsDefault = parcelHelpers.interopDefault(_axiosHeadersJs);
+var _buildURLJs = require("./buildURL.js");
+var _buildURLJsDefault = parcelHelpers.interopDefault(_buildURLJs);
+exports.default = (config)=>{
+    const newConfig = (0, _mergeConfigJsDefault.default)({}, config);
+    let { data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth } = newConfig;
+    newConfig.headers = headers = (0, _axiosHeadersJsDefault.default).from(headers);
+    newConfig.url = (0, _buildURLJsDefault.default)((0, _buildFullPathJsDefault.default)(newConfig.baseURL, newConfig.url), config.params, config.paramsSerializer);
+    // HTTP basic authentication
+    if (auth) headers.set("Authorization", "Basic " + btoa((auth.username || "") + ":" + (auth.password ? unescape(encodeURIComponent(auth.password)) : "")));
+    let contentType;
+    if ((0, _utilsJsDefault.default).isFormData(data)) {
+        if ((0, _indexJsDefault.default).hasStandardBrowserEnv || (0, _indexJsDefault.default).hasStandardBrowserWebWorkerEnv) headers.setContentType(undefined); // Let the browser set it
+        else if ((contentType = headers.getContentType()) !== false) {
+            // fix semicolon duplication issue for ReactNative FormData implementation
+            const [type, ...tokens] = contentType ? contentType.split(";").map((token)=>token.trim()).filter(Boolean) : [];
+            headers.setContentType([
+                type || "multipart/form-data",
+                ...tokens
+            ].join("; "));
+        }
+    }
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if ((0, _indexJsDefault.default).hasStandardBrowserEnv) {
+        withXSRFToken && (0, _utilsJsDefault.default).isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(newConfig));
+        if (withXSRFToken || withXSRFToken !== false && (0, _isURLSameOriginJsDefault.default)(newConfig.url)) {
+            // Add xsrf header
+            const xsrfValue = xsrfHeaderName && xsrfCookieName && (0, _cookiesJsDefault.default).read(xsrfCookieName);
+            if (xsrfValue) headers.set(xsrfHeaderName, xsrfValue);
+        }
+    }
+    return newConfig;
+};
+
+},{"../platform/index.js":"7tDev","../utils.js":"5By4s","./isURLSameOrigin.js":"lxXtv","./cookies.js":"4WJjt","../core/buildFullPath.js":"1I5TW","../core/mergeConfig.js":"b85oP","../core/AxiosHeaders.js":"cgSSx","./buildURL.js":"3bwC2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lxXtv":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _utilsJs = require("./../utils.js");
+var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
+var _indexJs = require("../platform/index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+"use strict";
+exports.default = (0, _indexJsDefault.default).hasStandardBrowserEnv ? // Standard browser envs have full support of the APIs needed to test
+// whether the request URL is of the same origin as current location.
+function standardBrowserEnv() {
+    const msie = /(msie|trident)/i.test(navigator.userAgent);
+    const urlParsingNode = document.createElement("a");
+    let originURL;
+    /**
+    * Parse a URL to discover its components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */ function resolveURL(url) {
+        let href = url;
+        if (msie) {
+            // IE needs attribute set twice to normalize properties
+            urlParsingNode.setAttribute("href", href);
+            href = urlParsingNode.href;
+        }
+        urlParsingNode.setAttribute("href", href);
+        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+        return {
+            href: urlParsingNode.href,
+            protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, "") : "",
+            host: urlParsingNode.host,
+            search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, "") : "",
+            hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, "") : "",
+            hostname: urlParsingNode.hostname,
+            port: urlParsingNode.port,
+            pathname: urlParsingNode.pathname.charAt(0) === "/" ? urlParsingNode.pathname : "/" + urlParsingNode.pathname
+        };
+    }
+    originURL = resolveURL(window.location.href);
+    /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */ return function isURLSameOrigin(requestURL) {
+        const parsed = (0, _utilsJsDefault.default).isString(requestURL) ? resolveURL(requestURL) : requestURL;
+        return parsed.protocol === originURL.protocol && parsed.host === originURL.host;
+    };
+}() : // Non standard browser envs (web workers, react-native) lack needed support.
+function nonStandardBrowserEnv() {
+    return function isURLSameOrigin() {
+        return true;
+    };
+}();
+
+},{"./../utils.js":"5By4s","../platform/index.js":"7tDev","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4WJjt":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _utilsJs = require("./../utils.js");
@@ -4632,110 +4881,6 @@ function combineURLs(baseURL, relativeURL) {
     return relativeURL ? baseURL.replace(/\/?\/$/, "") + "/" + relativeURL.replace(/^\/+/, "") : baseURL;
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lxXtv":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-var _utilsJs = require("./../utils.js");
-var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
-var _indexJs = require("../platform/index.js");
-var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
-"use strict";
-exports.default = (0, _indexJsDefault.default).hasStandardBrowserEnv ? // Standard browser envs have full support of the APIs needed to test
-// whether the request URL is of the same origin as current location.
-function standardBrowserEnv() {
-    const msie = /(msie|trident)/i.test(navigator.userAgent);
-    const urlParsingNode = document.createElement("a");
-    let originURL;
-    /**
-    * Parse a URL to discover its components
-    *
-    * @param {String} url The URL to be parsed
-    * @returns {Object}
-    */ function resolveURL(url) {
-        let href = url;
-        if (msie) {
-            // IE needs attribute set twice to normalize properties
-            urlParsingNode.setAttribute("href", href);
-            href = urlParsingNode.href;
-        }
-        urlParsingNode.setAttribute("href", href);
-        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
-        return {
-            href: urlParsingNode.href,
-            protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, "") : "",
-            host: urlParsingNode.host,
-            search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, "") : "",
-            hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, "") : "",
-            hostname: urlParsingNode.hostname,
-            port: urlParsingNode.port,
-            pathname: urlParsingNode.pathname.charAt(0) === "/" ? urlParsingNode.pathname : "/" + urlParsingNode.pathname
-        };
-    }
-    originURL = resolveURL(window.location.href);
-    /**
-    * Determine if a URL shares the same origin as the current location
-    *
-    * @param {String} requestURL The URL to test
-    * @returns {boolean} True if URL shares the same origin, otherwise false
-    */ return function isURLSameOrigin(requestURL) {
-        const parsed = (0, _utilsJsDefault.default).isString(requestURL) ? resolveURL(requestURL) : requestURL;
-        return parsed.protocol === originURL.protocol && parsed.host === originURL.host;
-    };
-}() : // Non standard browser envs (web workers, react-native) lack needed support.
-function nonStandardBrowserEnv() {
-    return function isURLSameOrigin() {
-        return true;
-    };
-}();
-
-},{"./../utils.js":"5By4s","../platform/index.js":"7tDev","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7NfWU":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "default", ()=>parseProtocol);
-"use strict";
-function parseProtocol(url) {
-    const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
-    return match && match[1] || "";
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gQeo1":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-"use strict";
-/**
- * Calculate data maxRate
- * @param {Number} [samplesCount= 10]
- * @param {Number} [min= 1000]
- * @returns {Function}
- */ function speedometer(samplesCount, min) {
-    samplesCount = samplesCount || 10;
-    const bytes = new Array(samplesCount);
-    const timestamps = new Array(samplesCount);
-    let head = 0;
-    let tail = 0;
-    let firstSampleTS;
-    min = min !== undefined ? min : 1000;
-    return function push(chunkLength) {
-        const now = Date.now();
-        const startedAt = timestamps[tail];
-        if (!firstSampleTS) firstSampleTS = now;
-        bytes[head] = chunkLength;
-        timestamps[head] = now;
-        let i = tail;
-        let bytesCount = 0;
-        while(i !== head){
-            bytesCount += bytes[i++];
-            i = i % samplesCount;
-        }
-        head = (head + 1) % samplesCount;
-        if (head === tail) tail = (tail + 1) % samplesCount;
-        if (now - firstSampleTS < min) return;
-        const passed = startedAt && now - startedAt;
-        return passed ? Math.round(bytesCount * 1000 / passed) : undefined;
-    };
-}
-exports.default = speedometer;
-
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b85oP":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -4745,7 +4890,9 @@ var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
 var _axiosHeadersJs = require("./AxiosHeaders.js");
 var _axiosHeadersJsDefault = parcelHelpers.interopDefault(_axiosHeadersJs);
 "use strict";
-const headersToObject = (thing)=>thing instanceof (0, _axiosHeadersJsDefault.default) ? thing.toJSON() : thing;
+const headersToObject = (thing)=>thing instanceof (0, _axiosHeadersJsDefault.default) ? {
+        ...thing
+    } : thing;
 function mergeConfig(config1, config2) {
     // eslint-disable-next-line no-param-reassign
     config2 = config2 || {};
@@ -4816,7 +4963,252 @@ function mergeConfig(config1, config2) {
     return config;
 }
 
-},{"../utils.js":"5By4s","./AxiosHeaders.js":"cgSSx","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9vgkY":[function(require,module,exports) {
+},{"../utils.js":"5By4s","./AxiosHeaders.js":"cgSSx","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lVBFV":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../platform/index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+var _utilsJs = require("../utils.js");
+var _utilsJsDefault = parcelHelpers.interopDefault(_utilsJs);
+var _axiosErrorJs = require("../core/AxiosError.js");
+var _axiosErrorJsDefault = parcelHelpers.interopDefault(_axiosErrorJs);
+var _composeSignalsJs = require("../helpers/composeSignals.js");
+var _composeSignalsJsDefault = parcelHelpers.interopDefault(_composeSignalsJs);
+var _trackStreamJs = require("../helpers/trackStream.js");
+var _axiosHeadersJs = require("../core/AxiosHeaders.js");
+var _axiosHeadersJsDefault = parcelHelpers.interopDefault(_axiosHeadersJs);
+var _progressEventReducerJs = require("../helpers/progressEventReducer.js");
+var _progressEventReducerJsDefault = parcelHelpers.interopDefault(_progressEventReducerJs);
+var _resolveConfigJs = require("../helpers/resolveConfig.js");
+var _resolveConfigJsDefault = parcelHelpers.interopDefault(_resolveConfigJs);
+var _settleJs = require("../core/settle.js");
+var _settleJsDefault = parcelHelpers.interopDefault(_settleJs);
+const fetchProgressDecorator = (total, fn)=>{
+    const lengthComputable = total != null;
+    return (loaded)=>setTimeout(()=>fn({
+                lengthComputable,
+                total,
+                loaded
+            }));
+};
+const isFetchSupported = typeof fetch === "function" && typeof Request === "function" && typeof Response === "function";
+const isReadableStreamSupported = isFetchSupported && typeof ReadableStream === "function";
+// used only inside the fetch adapter
+const encodeText = isFetchSupported && (typeof TextEncoder === "function" ? ((encoder)=>(str)=>encoder.encode(str))(new TextEncoder()) : async (str)=>new Uint8Array(await new Response(str).arrayBuffer()));
+const supportsRequestStream = isReadableStreamSupported && (()=>{
+    let duplexAccessed = false;
+    const hasContentType = new Request((0, _indexJsDefault.default).origin, {
+        body: new ReadableStream(),
+        method: "POST",
+        get duplex () {
+            duplexAccessed = true;
+            return "half";
+        }
+    }).headers.has("Content-Type");
+    return duplexAccessed && !hasContentType;
+})();
+const DEFAULT_CHUNK_SIZE = 65536;
+const supportsResponseStream = isReadableStreamSupported && !!(()=>{
+    try {
+        return (0, _utilsJsDefault.default).isReadableStream(new Response("").body);
+    } catch (err) {
+    // return undefined
+    }
+})();
+const resolvers = {
+    stream: supportsResponseStream && ((res)=>res.body)
+};
+isFetchSupported && ((res)=>{
+    [
+        "text",
+        "arrayBuffer",
+        "blob",
+        "formData",
+        "stream"
+    ].forEach((type)=>{
+        !resolvers[type] && (resolvers[type] = (0, _utilsJsDefault.default).isFunction(res[type]) ? (res)=>res[type]() : (_, config)=>{
+            throw new (0, _axiosErrorJsDefault.default)(`Response type '${type}' is not supported`, (0, _axiosErrorJsDefault.default).ERR_NOT_SUPPORT, config);
+        });
+    });
+})(new Response);
+const getBodyLength = async (body)=>{
+    if (body == null) return 0;
+    if ((0, _utilsJsDefault.default).isBlob(body)) return body.size;
+    if ((0, _utilsJsDefault.default).isSpecCompliantForm(body)) return (await new Request(body).arrayBuffer()).byteLength;
+    if ((0, _utilsJsDefault.default).isArrayBufferView(body)) return body.byteLength;
+    if ((0, _utilsJsDefault.default).isURLSearchParams(body)) body = body + "";
+    if ((0, _utilsJsDefault.default).isString(body)) return (await encodeText(body)).byteLength;
+};
+const resolveBodyLength = async (headers, body)=>{
+    const length = (0, _utilsJsDefault.default).toFiniteNumber(headers.getContentLength());
+    return length == null ? getBodyLength(body) : length;
+};
+exports.default = isFetchSupported && (async (config)=>{
+    let { url, method, data, signal, cancelToken, timeout, onDownloadProgress, onUploadProgress, responseType, headers, withCredentials = "same-origin", fetchOptions } = (0, _resolveConfigJsDefault.default)(config);
+    responseType = responseType ? (responseType + "").toLowerCase() : "text";
+    let [composedSignal, stopTimeout] = signal || cancelToken || timeout ? (0, _composeSignalsJsDefault.default)([
+        signal,
+        cancelToken
+    ], timeout) : [];
+    let finished, request;
+    const onFinish = ()=>{
+        !finished && setTimeout(()=>{
+            composedSignal && composedSignal.unsubscribe();
+        });
+        finished = true;
+    };
+    let requestContentLength;
+    try {
+        if (onUploadProgress && supportsRequestStream && method !== "get" && method !== "head" && (requestContentLength = await resolveBodyLength(headers, data)) !== 0) {
+            let _request = new Request(url, {
+                method: "POST",
+                body: data,
+                duplex: "half"
+            });
+            let contentTypeHeader;
+            if ((0, _utilsJsDefault.default).isFormData(data) && (contentTypeHeader = _request.headers.get("content-type"))) headers.setContentType(contentTypeHeader);
+            if (_request.body) data = (0, _trackStreamJs.trackStream)(_request.body, DEFAULT_CHUNK_SIZE, fetchProgressDecorator(requestContentLength, (0, _progressEventReducerJsDefault.default)(onUploadProgress)), null, encodeText);
+        }
+        if (!(0, _utilsJsDefault.default).isString(withCredentials)) withCredentials = withCredentials ? "cors" : "omit";
+        request = new Request(url, {
+            ...fetchOptions,
+            signal: composedSignal,
+            method: method.toUpperCase(),
+            headers: headers.normalize().toJSON(),
+            body: data,
+            duplex: "half",
+            withCredentials
+        });
+        let response = await fetch(request);
+        const isStreamResponse = supportsResponseStream && (responseType === "stream" || responseType === "response");
+        if (supportsResponseStream && (onDownloadProgress || isStreamResponse)) {
+            const options = {};
+            [
+                "status",
+                "statusText",
+                "headers"
+            ].forEach((prop)=>{
+                options[prop] = response[prop];
+            });
+            const responseContentLength = (0, _utilsJsDefault.default).toFiniteNumber(response.headers.get("content-length"));
+            response = new Response((0, _trackStreamJs.trackStream)(response.body, DEFAULT_CHUNK_SIZE, onDownloadProgress && fetchProgressDecorator(responseContentLength, (0, _progressEventReducerJsDefault.default)(onDownloadProgress, true)), isStreamResponse && onFinish, encodeText), options);
+        }
+        responseType = responseType || "text";
+        let responseData = await resolvers[(0, _utilsJsDefault.default).findKey(resolvers, responseType) || "text"](response, config);
+        !isStreamResponse && onFinish();
+        stopTimeout && stopTimeout();
+        return await new Promise((resolve, reject)=>{
+            (0, _settleJsDefault.default)(resolve, reject, {
+                data: responseData,
+                headers: (0, _axiosHeadersJsDefault.default).from(response.headers),
+                status: response.status,
+                statusText: response.statusText,
+                config,
+                request
+            });
+        });
+    } catch (err) {
+        onFinish();
+        if (err && err.name === "TypeError" && /fetch/i.test(err.message)) throw Object.assign(new (0, _axiosErrorJsDefault.default)("Network Error", (0, _axiosErrorJsDefault.default).ERR_NETWORK, config, request), {
+            cause: err.cause || err
+        });
+        throw (0, _axiosErrorJsDefault.default).from(err, err && err.code, config, request);
+    }
+});
+
+},{"../platform/index.js":"7tDev","../utils.js":"5By4s","../core/AxiosError.js":"3u8Tl","../helpers/composeSignals.js":"3xrUR","../helpers/trackStream.js":"kIZVF","../core/AxiosHeaders.js":"cgSSx","../helpers/progressEventReducer.js":"bN9Fp","../helpers/resolveConfig.js":"l0e6d","../core/settle.js":"dD9aC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3xrUR":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _canceledErrorJs = require("../cancel/CanceledError.js");
+var _canceledErrorJsDefault = parcelHelpers.interopDefault(_canceledErrorJs);
+var _axiosErrorJs = require("../core/AxiosError.js");
+var _axiosErrorJsDefault = parcelHelpers.interopDefault(_axiosErrorJs);
+const composeSignals = (signals, timeout)=>{
+    let controller = new AbortController();
+    let aborted;
+    const onabort = function(cancel) {
+        if (!aborted) {
+            aborted = true;
+            unsubscribe();
+            const err = cancel instanceof Error ? cancel : this.reason;
+            controller.abort(err instanceof (0, _axiosErrorJsDefault.default) ? err : new (0, _canceledErrorJsDefault.default)(err instanceof Error ? err.message : err));
+        }
+    };
+    let timer = timeout && setTimeout(()=>{
+        onabort(new (0, _axiosErrorJsDefault.default)(`timeout ${timeout} of ms exceeded`, (0, _axiosErrorJsDefault.default).ETIMEDOUT));
+    }, timeout);
+    const unsubscribe = ()=>{
+        if (signals) {
+            timer && clearTimeout(timer);
+            timer = null;
+            signals.forEach((signal)=>{
+                signal && (signal.removeEventListener ? signal.removeEventListener("abort", onabort) : signal.unsubscribe(onabort));
+            });
+            signals = null;
+        }
+    };
+    signals.forEach((signal)=>signal && signal.addEventListener && signal.addEventListener("abort", onabort));
+    const { signal } = controller;
+    signal.unsubscribe = unsubscribe;
+    return [
+        signal,
+        ()=>{
+            timer && clearTimeout(timer);
+            timer = null;
+        }
+    ];
+};
+exports.default = composeSignals;
+
+},{"../cancel/CanceledError.js":"9PwCG","../core/AxiosError.js":"3u8Tl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kIZVF":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "streamChunk", ()=>streamChunk);
+parcelHelpers.export(exports, "readBytes", ()=>readBytes);
+parcelHelpers.export(exports, "trackStream", ()=>trackStream);
+const streamChunk = function*(chunk, chunkSize) {
+    let len = chunk.byteLength;
+    if (!chunkSize || len < chunkSize) {
+        yield chunk;
+        return;
+    }
+    let pos = 0;
+    let end;
+    while(pos < len){
+        end = pos + chunkSize;
+        yield chunk.slice(pos, end);
+        pos = end;
+    }
+};
+const readBytes = async function*(iterable, chunkSize, encode) {
+    for await (const chunk of iterable)yield* streamChunk(ArrayBuffer.isView(chunk) ? chunk : await encode(String(chunk)), chunkSize);
+};
+const trackStream = (stream, chunkSize, onProgress, onFinish, encode)=>{
+    const iterator = readBytes(stream, chunkSize, encode);
+    let bytes = 0;
+    return new ReadableStream({
+        type: "bytes",
+        async pull (controller) {
+            const { done, value } = await iterator.next();
+            if (done) {
+                controller.close();
+                onFinish();
+                return;
+            }
+            let len = value.byteLength;
+            onProgress && onProgress(bytes += len);
+            controller.enqueue(new Uint8Array(value));
+        },
+        cancel (reason) {
+            onFinish(reason);
+            return iterator.return();
+        }
+    }, {
+        highWaterMark: 2
+    });
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9vgkY":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _dataJs = require("../env/data.js");
@@ -4894,7 +5286,7 @@ exports.default = {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "VERSION", ()=>VERSION);
-const VERSION = "1.6.7";
+const VERSION = "1.7.2";
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"45wzn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -5078,46 +5470,44 @@ Object.entries(HttpStatusCode).forEach(([key, value])=>{
 });
 exports.default = HttpStatusCode;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
-// Type Alias for a Empty Function (no Arg and no return values)
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6Bbds":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// class responsible for handling all the different Events tied to a User
-parcelHelpers.export(exports, "Eventing", ()=>Eventing);
-class Eventing {
-    // called with some 'eventName' of Event that is a String
-    // 2nd Arg - callback function
-    on(eventName, callback) {
-        // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
-        // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
-        // either way 'handlers' is going to be an Array
-        const handlers = this.events[eventName] || [];
-        // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
-        handlers.push(callback);
-        // then it will take the 'handlers' Array and assign it back to 'this.events' Object
-        this.events[eventName] = handlers;
+parcelHelpers.export(exports, "Attributes", ()=>Attributes);
+class Attributes {
+    // 'data' - has all the custom info about the User
+    constructor(data){
+        this.data = data;
+        this.// will be called with some 'key' - name of the property that I try to retrieve
+        // K & T - represents some kind of TYPE
+        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
+        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
+        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
+        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
+        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
+        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
+        get = (key)=>{
+            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+        };
     }
-    // will trigger all the different callbacks registered to some particular Event
-    trigger(eventName) {
-        // checks if it has some registered events with this given 'eventName'
-        const handlers = this.events[eventName];
-        // if 'handlers' is defined and if it is an Array, then 'return' early
-        if (!handlers || handlers.length === 0) return;
-        // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
-        handlers.forEach((callback)=>{
-            callback();
-        });
-    }
-    constructor(){
-        // Stores all the different Events that get registered
-        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
-        // [key: string] - because I don't know yet what Properties this Object is going to have
-        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
-        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
-        this.events = {};
+    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
+    set(update) {
+        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
+        // data - is the Object that records all the information about a particular User
+        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
+        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
+        Object.assign(this.data, update);
     }
 }
+const attrs = new Attributes({
+    id: 5,
+    age: 20,
+    name: "asdf"
+});
+const name = attrs.get("name");
+const age = attrs.get("age");
+const id = attrs.get("id");
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["aHFy6","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map

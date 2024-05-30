@@ -12,9 +12,9 @@ export class Attributes<T extends object> {
   // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
   // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
   // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
-  get<K extends keyof T>(key: K): T[K] {
-    return this.data[key];
-  }
+  get = <K extends keyof T>(key: K): T[K] => {
+    return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+  };
   // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
   set(update: T): void {
     // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object

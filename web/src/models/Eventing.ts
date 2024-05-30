@@ -11,7 +11,7 @@ export class Eventing {
   events: { [key: string]: Callback[] } = {};
   // called with some 'eventName' of Event that is a String
   // 2nd Arg - callback function
-  on(eventName: string, callback: Callback): void {
+  on = (eventName: string, callback: Callback): void => {
     // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
     // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
     // either way 'handlers' is going to be an Array
@@ -20,10 +20,10 @@ export class Eventing {
     handlers.push(callback);
     // then it will take the 'handlers' Array and assign it back to 'this.events' Object
     this.events[eventName] = handlers;
-  }
+  };
 
   // will trigger all the different callbacks registered to some particular Event
-  trigger(eventName: string): void {
+  trigger = (eventName: string): void => {
     // checks if it has some registered events with this given 'eventName'
     const handlers = this.events[eventName];
     // if 'handlers' is defined and if it is an Array, then 'return' early
@@ -34,5 +34,5 @@ export class Eventing {
     handlers.forEach((callback) => {
       callback();
     });
-  }
+  };
 }
