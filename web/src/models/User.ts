@@ -34,4 +34,11 @@ export class User {
   get get() {
     return this.attributes.get;
   }
+
+  // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
+  // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
+  set(update: UserProps): void {
+    this.attributes.set(update);
+    this.events.trigger('change');
+  }
 }

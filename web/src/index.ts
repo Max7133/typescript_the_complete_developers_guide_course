@@ -58,6 +58,7 @@ console.log(user.get('name')); // new record
 
 user.on('change', () => {
   console.log('User was changed');
-});
+}); // returns the 'on' Function from the 'Eventing' class.
 
-user.trigger('change'); // User was changed
+// Updating property of User
+user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log
