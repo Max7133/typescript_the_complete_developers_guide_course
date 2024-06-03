@@ -627,15 +627,23 @@ user.on('save', () => {
 
 // triggering Events
 user.trigger('change'); */ // taking all the 'attributes' this User has and then save them to the JSON server
+// const user = new User({ name: 'new record', age: 0 });
+// console.log(user.get('name')); // new record
+/* user.on('change', () => {
+  console.log('User was changed');
+}); // returns the 'on' Function from the 'Eventing' class.
+ */ // Updating property of User
+/* user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log */ // Get the 'id' of 'user', make request to JSON server with the 'id' of 1
 const user = new (0, _user.User)({
-    name: "new record",
-    age: 0
+    id: 1
 });
-console.log(user.get("name")); // new record
+// will trigger this event whenever I change some data that is tied to 'user'
 user.on("change", ()=>{
-    console.log("User was changed");
-});
-user.trigger("change"); // User was changed
+    console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
+/*   User
+  attributes: Attributes
+  data: {id: 1, name: 'NEW NAME', age: 35} */ });
+user.fetch(); // update the Properties on the 'user' vie the 'set' Method
 
 },{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -664,6 +672,23 @@ class User {
     }
     get get() {
         return this.attributes.get;
+    }
+    // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
+    // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
+    set(update) {
+        this.attributes.set(update);
+        this.events.trigger("change");
+    }
+    // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
+    // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
+    fetch() {
+        const id = this.get("id");
+        // if 'id' doesn't exist, if it's not a number or undefined
+        if (typeof id !== "number") throw new Error("Cannot fetch without an id");
+        // when I have 'id', call the 'fetch' Method on 'sync'
+        this.sync.fetch(id).then((response)=>{
+            this.set(response.data); // updates 'attributes' and triggers 'change' event
+        });
     }
 }
 

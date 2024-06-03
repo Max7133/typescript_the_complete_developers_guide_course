@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { Eventing } from './Eventing';
 import { Sync } from './Sync';
 import { Attributes } from './Attributes';
@@ -40,5 +41,21 @@ export class User {
   set(update: UserProps): void {
     this.attributes.set(update);
     this.events.trigger('change');
+  }
+
+  // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
+  // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
+  fetch(): void {
+    const id = this.get('id');
+
+    // if 'id' doesn't exist, if it's not a number or undefined
+    if (typeof id !== 'number') {
+      throw new Error('Cannot fetch without an id');
+    }
+
+    // when I have 'id', call the 'fetch' Method on 'sync'
+    this.sync.fetch(id).then((response: AxiosResponse): void => {
+      this.set(response.data); // updates 'attributes' and triggers 'change' event
+    });
   }
 }
