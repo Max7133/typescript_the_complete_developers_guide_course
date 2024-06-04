@@ -65,14 +65,14 @@ user.trigger('change'); */
 /* user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log */
 
 // Get the 'id' of 'user', make request to JSON server with the 'id' of 1
-const user = new User({ id: 1 });
+const user = new User({ id: 1, name: 'Newer Name', age: 0 });
 
-// will trigger this event whenever I change some data that is tied to 'user'
-user.on('change', () => {
+// will trigger this event whenever I save some data that is tied to 'user'
+user.on('save', () => {
   console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
   /*   User
   attributes: Attributes
-  data: {id: 1, name: 'NEW NAME', age: 35} */
+  data: {id: 1, name: 'Newer Name', age: 0} */
 });
 
-user.fetch(); // update the Properties on the 'user' vie the 'set' Method
+user.save(); // update the Properties on the 'user' vie the 'set' Method

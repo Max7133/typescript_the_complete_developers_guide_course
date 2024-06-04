@@ -23,14 +23,8 @@ export class Attributes<T extends object> {
     // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
     Object.assign(this.data, update);
   }
+
+  getAll(): T {
+    return this.data; // T is <UserProps> === id, name, age
+  }
 }
-
-const attrs = new Attributes<UserProps>({
-  id: 5,
-  age: 20,
-  name: 'asdf',
-});
-
-const name = attrs.get('name');
-const age = attrs.get('age');
-const id = attrs.get('id');

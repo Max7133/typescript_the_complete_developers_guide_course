@@ -58,4 +58,16 @@ export class User {
       this.set(response.data); // updates 'attributes' and triggers 'change' event
     });
   }
+  // pulls off all different properties off the User class, specifically off the 'attributes' Property
+  // then it will save all the info to the JSON server
+  save(): void {
+    this.sync
+      .save(this.attributes.getAll()) // getAll - gets T which is <UserProps> === id, name, age
+      .then((response: AxiosResponse): void => {
+        this.trigger('save');
+      })
+      .catch(() => {
+        this.trigger('error');
+      });
+  }
 }

@@ -635,15 +635,17 @@ user.trigger('change'); */ // taking all the 'attributes' this User has and then
  */ // Updating property of User
 /* user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log */ // Get the 'id' of 'user', make request to JSON server with the 'id' of 1
 const user = new (0, _user.User)({
-    id: 1
+    id: 1,
+    name: "Newer Name",
+    age: 0
 });
-// will trigger this event whenever I change some data that is tied to 'user'
-user.on("change", ()=>{
+// will trigger this event whenever I save some data that is tied to 'user'
+user.on("save", ()=>{
     console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
 /*   User
   attributes: Attributes
-  data: {id: 1, name: 'NEW NAME', age: 35} */ });
-user.fetch(); // update the Properties on the 'user' vie the 'set' Method
+  data: {id: 1, name: 'Newer Name', age: 0} */ });
+user.save(); // update the Properties on the 'user' vie the 'set' Method
 
 },{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -688,6 +690,16 @@ class User {
         // when I have 'id', call the 'fetch' Method on 'sync'
         this.sync.fetch(id).then((response)=>{
             this.set(response.data); // updates 'attributes' and triggers 'change' event
+        });
+    }
+    // pulls off all different properties off the User class, specifically off the 'attributes' Property
+    // then it will save all the info to the JSON server
+    save() {
+        this.sync.save(this.attributes.getAll()) // getAll - gets T which is <UserProps> === id, name, age
+        .then((response)=>{
+            this.trigger("save");
+        }).catch(()=>{
+            this.trigger("error");
         });
     }
 }
@@ -5522,6 +5534,9 @@ class Attributes {
         // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
         // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
         Object.assign(this.data, update);
+    }
+    getAll() {
+        return this.data; // T is <UserProps> === id, name, age
     }
 }
 const attrs = new Attributes({
