@@ -1,4 +1,7 @@
 import { Model } from './Model';
+import { Attributes } from './Attributes';
+import { ApiSync } from './ApiSync';
+import { Eventing } from './Eventing';
 
 export interface UserProps {
   // ? - it can have a 'name' or 'age' but not a must!
@@ -9,4 +12,16 @@ export interface UserProps {
 
 const rootUrl = 'http://localhost:3000/users';
 
-export class User extends Model<UserProps> {}
+export class User extends Model<UserProps> {
+  // gives a pre-configured version of the User (copy of User with all appropriate attributes)
+  // attrs - pass in the starting initial properties for creating a new instance of User
+  // : User - returns a pre initialized User
+  static buildUser(attrs: UserProps): User {
+    return new User(
+      // first argument needs to satisfy the Model 'attributes' interface
+      new Attributes<UserProps>(attrs),
+      new Eventing(),
+      new ApiSync<UserProps>(rootUrl)
+    );
+  }
+}
