@@ -634,36 +634,55 @@ user.trigger('change'); */ // taking all the 'attributes' this User has and then
 }); // returns the 'on' Function from the 'Eventing' class.
  */ // Updating property of User
 /* user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log */ // Get the 'id' of 'user', make request to JSON server with the 'id' of 1
-const user = new (0, _user.User)({
-    id: 1,
-    name: "Newer Name",
-    age: 0
+//const user = new User({ id: 1, name: 'Newer Name', age: 0 });
+const user = (0, _user.User).buildUser({
+    id: 1
 });
 // will trigger this event whenever I save some data that is tied to 'user'
-user.on("save", ()=>{
-    console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
+// user.on('save', () => {
+// console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
 /*   User
   attributes: Attributes
-  data: {id: 1, name: 'Newer Name', age: 0} */ });
-user.save(); // update the Properties on the 'user' vie the 'set' Method
+  data: {id: 1, name: 'Newer Name', age: 0} */ // });
+user.on("change", ()=>{
+    console.log(user);
+});
+// user.save(); // update the Properties on the 'user' vie the 'set' Method
+user.fetch();
 
 },{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "User", ()=>User);
-var _eventing = require("./Eventing");
-var _sync = require("./Sync");
+var _model = require("./Model");
 var _attributes = require("./Attributes");
+var _apiSync = require("./ApiSync");
+var _eventing = require("./Eventing");
 const rootUrl = "http://localhost:3000/users";
-class User {
-    // receives starting 'attributes' for the User
-    constructor(attrs){
-        this.events = new (0, _eventing.Eventing)() // type 'Eventing'
-        ;
-        // Whenever an instance of a User is created, it's going to get Public Property 'sync' that's going to an instance of the Sync class, where the intefrace 'UserProps' is going to be used
-        this.sync = new (0, _sync.Sync)(rootUrl) // whenever an instance of 'sync' is created, a URL needs to be passed to use it as the root URL
-        ;
-        this.attributes = new (0, _attributes.Attributes)(attrs);
+class User extends (0, _model.Model) {
+    // gives a pre-configured version of the User (copy of User with all appropriate attributes)
+    // attrs - pass in the starting initial properties for creating a new instance of User
+    // : User - returns a pre initialized User
+    static buildUser(attrs) {
+        return new User(// first argument needs to satisfy the Model 'attributes' interface
+        new (0, _attributes.Attributes)(attrs), new (0, _eventing.Eventing)(), new (0, _apiSync.ApiSync)(rootUrl));
+    }
+}
+
+},{"./Model":"f033k","./Attributes":"6Bbds","./ApiSync":"3wylh","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f033k":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// added type constraint T extends HasId
+parcelHelpers.export(exports, "Model", ()=>Model);
+class Model {
+    // takes an instance of anything that satisfies ModelAttributes, Sync and Events Interface and it's going to assign them all to Private Properties
+    constructor(// needs to satisfy ModelAttributes interface
+    attributes, // needs to satisfy Events interface
+    events, // needs to satisfy Sync interface
+    sync){
+        this.attributes = attributes;
+        this.events = events;
+        this.sync = sync;
     }
     // takes Arguments, returns directly the 'on' function from 'this.events'
     get on() {
@@ -695,52 +714,12 @@ class User {
     // pulls off all different properties off the User class, specifically off the 'attributes' Property
     // then it will save all the info to the JSON server
     save() {
-        this.sync.save(this.attributes.getAll()) // getAll - gets T which is <UserProps> === id, name, age
+        this.sync.save(this.attributes.getAll()) // getAll - gets T === id, name, age
         .then((response)=>{
             this.trigger("save");
         }).catch(()=>{
             this.trigger("error");
         });
-    }
-}
-
-},{"./Eventing":"7459s","./Sync":"QO3Gl","./Attributes":"6Bbds","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
-// Type Alias for a Empty Function (no Arg and no return values)
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// class responsible for handling all the different Events tied to a User
-parcelHelpers.export(exports, "Eventing", ()=>Eventing);
-class Eventing {
-    constructor(){
-        // Stores all the different Events that get registered
-        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
-        // [key: string] - because I don't know yet what Properties this Object is going to have
-        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
-        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
-        this.events = {};
-        // called with some 'eventName' of Event that is a String
-        // 2nd Arg - callback function
-        this.on = (eventName, callback)=>{
-            // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
-            // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
-            // either way 'handlers' is going to be an Array
-            const handlers = this.events[eventName] || [];
-            // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
-            handlers.push(callback);
-            // then it will take the 'handlers' Array and assign it back to 'this.events' Object
-            this.events[eventName] = handlers;
-        };
-        // will trigger all the different callbacks registered to some particular Event
-        this.trigger = (eventName)=>{
-            // checks if it has some registered events with this given 'eventName'
-            const handlers = this.events[eventName];
-            // if 'handlers' is defined and if it is an Array, then 'return' early
-            if (!handlers || handlers.length === 0) return;
-            // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
-            handlers.forEach((callback)=>{
-                callback();
-            });
-        };
     }
 }
 
@@ -774,14 +753,47 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"QO3Gl":[function(require,module,exports) {
+},{}],"6Bbds":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Attributes", ()=>Attributes);
+class Attributes {
+    // 'data' - has all the custom info about the User
+    constructor(data){
+        this.data = data;
+        this.// will be called with some 'key' - name of the property that I try to retrieve
+        // K & T - represents some kind of TYPE
+        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
+        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
+        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
+        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
+        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
+        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
+        get = (key)=>{
+            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+        };
+    }
+    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
+    set(update) {
+        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
+        // data - is the Object that records all the information about a particular User
+        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
+        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
+        Object.assign(this.data, update);
+    }
+    getAll() {
+        return this.data; // T is <UserProps> === id, name, age
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3wylh":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
-parcelHelpers.export(exports, "Sync", ()=>Sync);
+parcelHelpers.export(exports, "ApiSync", ()=>ApiSync);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
-class Sync {
+class ApiSync {
     // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
     constructor(rootUrl){
         this.rootUrl = rootUrl;
@@ -5507,46 +5519,45 @@ Object.entries(HttpStatusCode).forEach(([key, value])=>{
 });
 exports.default = HttpStatusCode;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6Bbds":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
+// Type Alias for a Empty Function (no Arg and no return values)
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Attributes", ()=>Attributes);
-class Attributes {
-    // 'data' - has all the custom info about the User
-    constructor(data){
-        this.data = data;
-        this.// will be called with some 'key' - name of the property that I try to retrieve
-        // K & T - represents some kind of TYPE
-        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
-        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
-        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
-        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
-        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
-        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
-        get = (key)=>{
-            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+// class responsible for handling all the different Events tied to a User
+parcelHelpers.export(exports, "Eventing", ()=>Eventing);
+class Eventing {
+    constructor(){
+        // Stores all the different Events that get registered
+        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
+        // [key: string] - because I don't know yet what Properties this Object is going to have
+        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
+        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
+        this.events = {};
+        // called with some 'eventName' of Event that is a String
+        // 2nd Arg - callback function
+        this.on = (eventName, callback)=>{
+            // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
+            // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
+            // either way 'handlers' is going to be an Array
+            const handlers = this.events[eventName] || [];
+            // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
+            handlers.push(callback);
+            // then it will take the 'handlers' Array and assign it back to 'this.events' Object
+            this.events[eventName] = handlers;
+        };
+        // will trigger all the different callbacks registered to some particular Event
+        this.trigger = (eventName)=>{
+            // checks if it has some registered events with this given 'eventName'
+            const handlers = this.events[eventName];
+            // if 'handlers' is defined and if it is an Array, then 'return' early
+            if (!handlers || handlers.length === 0) return;
+            // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
+            handlers.forEach((callback)=>{
+                callback();
+            });
         };
     }
-    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
-    set(update) {
-        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
-        // data - is the Object that records all the information about a particular User
-        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
-        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
-        Object.assign(this.data, update);
-    }
-    getAll() {
-        return this.data; // T is <UserProps> === id, name, age
-    }
 }
-const attrs = new Attributes({
-    id: 5,
-    age: 20,
-    name: "asdf"
-});
-const name = attrs.get("name");
-const age = attrs.get("age");
-const id = attrs.get("id");
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
 
