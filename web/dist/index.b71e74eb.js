@@ -584,241 +584,50 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"h7u1C":[function(require,module,exports) {
-var _user = require("./models/User");
-// assigning an ID to an instance of User
-//const user = new User({ id: 1 });
-// testing for updating the info of the particular User
-//user.set({ name: 'NEW NAME', age: 35 });
-//user.save();
-// testing for creating new User
-//const newUser = new User({ name: 'new user', age: 0 });
-//newUser.save();
-//
-/* user.events.on('change', () => {
-  console.log('change!');
+var _collection = require("./models/Collection");
+const collection = new (0, _collection.Collection)("http://localhost:3000/users");
+// get notification when the 'fetch' has been completed
+collection.on("change", ()=>{
+    console.log(collection);
 });
+collection.fetch();
 
-user.events.trigger('change'); */ /* // creating a new User
-// 2nd Arg - Object that represents the Properties that this User has
-axios.get('http://localhost:3000/users/2'); */ /* import { User } from './models/User';
-
-const user = new User({ name: 'myname', age: 20 });
-
-// Update the 'name' and 'age'
-user.set({ name: 'Max' });
-
-// 'name' and 'age' because => get(propName: string)
-console.log(user.get('name')); // Max
-console.log(user.get('age')); // 20
-
-// testing adding the events
-user.on('change', () => {
-  console.log('Change #1'); // 2 outputs because of user.trigger('change') OUTPUT: Change #1
-});
-user.on('change', () => {
-  console.log('Change #2'); // 2 outputs because of user.trigger('change') OUTPUT: Change #2
-});
-user.on('save', () => {
-  console.log('Save was triggered');
-});
-
-// for making sure it works, Ill check the entire 'user' and look fot it's 'events property' and check that it has a 'change property' with at least 1 registered function
-// console.log(user); // User {data: {…}, events: {…}} (inside 'events' there is a Key 'change' with 1 registed Function with it)
-
-// triggering Events
-user.trigger('change'); */ // taking all the 'attributes' this User has and then save them to the JSON server
-// const user = new User({ name: 'new record', age: 0 });
-// console.log(user.get('name')); // new record
-/* user.on('change', () => {
-  console.log('User was changed');
-}); // returns the 'on' Function from the 'Eventing' class.
- */ // Updating property of User
-/* user.set({ name: 'New name' }); // as soon as it updates the Name Property on User, it will show the 'User was changed' console.log */ // Get the 'id' of 'user', make request to JSON server with the 'id' of 1
-//const user = new User({ id: 1, name: 'Newer Name', age: 0 });
-const user = (0, _user.User).buildUser({
-    id: 1
-});
-// will trigger this event whenever I save some data that is tied to 'user'
-// user.on('save', () => {
-// console.log(user); // User {events: Eventing, sync: Sync, attributes: Attributes}
-/*   User
-  attributes: Attributes
-  data: {id: 1, name: 'Newer Name', age: 0} */ // });
-user.on("change", ()=>{
-    console.log(user);
-});
-// user.save(); // update the Properties on the 'user' vie the 'set' Method
-user.fetch();
-
-},{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
+},{"./models/Collection":"dD11O"}],"dD11O":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "User", ()=>User);
-var _model = require("./Model");
-var _attributes = require("./Attributes");
-var _apiSync = require("./ApiSync");
+parcelHelpers.export(exports, "Collection", ()=>Collection);
+var _axios = require("axios");
+var _axiosDefault = parcelHelpers.interopDefault(_axios);
+var _user = require("./User");
 var _eventing = require("./Eventing");
-const rootUrl = "http://localhost:3000/users";
-class User extends (0, _model.Model) {
-    // gives a pre-configured version of the User (copy of User with all appropriate attributes)
-    // attrs - pass in the starting initial properties for creating a new instance of User
-    // : User - returns a pre initialized User
-    static buildUser(attrs) {
-        return new User(// first argument needs to satisfy the Model 'attributes' interface
-        new (0, _attributes.Attributes)(attrs), new (0, _eventing.Eventing)(), new (0, _apiSync.ApiSync)(rootUrl));
+class Collection {
+    constructor(rootUrl){
+        this.rootUrl = rootUrl;
+        this.models = [];
+        this.events = new (0, _eventing.Eventing)();
     }
-}
-
-},{"./Model":"f033k","./Attributes":"6Bbds","./ApiSync":"3wylh","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f033k":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// added type constraint T extends HasId
-parcelHelpers.export(exports, "Model", ()=>Model);
-class Model {
-    // takes an instance of anything that satisfies ModelAttributes, Sync and Events Interface and it's going to assign them all to Private Properties
-    constructor(// needs to satisfy ModelAttributes interface
-    attributes, // needs to satisfy Events interface
-    events, // needs to satisfy Sync interface
-    sync){
-        this.attributes = attributes;
-        this.events = events;
-        this.sync = sync;
-    }
-    // takes Arguments, returns directly the 'on' function from 'this.events'
+    // making sure that other class or locations inside of the code can directly call on(), trigger() on Collection class
     get on() {
-        return this.events.on; // because this is a 'getter', I don't need to call the 'on' method, instead, I'm returning a reference to the 'events' Method
+        return this.events.on;
     }
     get trigger() {
         return this.events.trigger;
     }
-    get get() {
-        return this.attributes.get;
-    }
-    // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
-    // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
-    set(update) {
-        this.attributes.set(update);
-        this.events.trigger("change");
-    }
-    // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
-    // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
     fetch() {
-        const id = this.get("id");
-        // if 'id' doesn't exist, if it's not a number or undefined
-        if (typeof id !== "number") throw new Error("Cannot fetch without an id");
-        // when I have 'id', call the 'fetch' Method on 'sync'
-        this.sync.fetch(id).then((response)=>{
-            this.set(response.data); // updates 'attributes' and triggers 'change' event
-        });
-    }
-    // pulls off all different properties off the User class, specifically off the 'attributes' Property
-    // then it will save all the info to the JSON server
-    save() {
-        this.sync.save(this.attributes.getAll()) // getAll - gets T === id, name, age
-        .then((response)=>{
-            this.trigger("save");
-        }).catch(()=>{
-            this.trigger("error");
+        // get JSON data and turn each of those Objects into an instance of User and add it into Models Array
+        (0, _axiosDefault.default).get(this.rootUrl).then((response)=>{
+            response.data.forEach((value)=>{
+                // taking the value and putting it into User.buildUser that will create a User
+                const user = (0, _user.User).buildUser(value);
+                this.models.push(user); // push User ro Models Array
+            });
+            // after loop, trigger change event
+            this.trigger("change");
         });
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"6Bbds":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Attributes", ()=>Attributes);
-class Attributes {
-    // 'data' - has all the custom info about the User
-    constructor(data){
-        this.data = data;
-        this.// will be called with some 'key' - name of the property that I try to retrieve
-        // K & T - represents some kind of TYPE
-        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
-        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
-        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
-        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
-        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
-        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
-        get = (key)=>{
-            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
-        };
-    }
-    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
-    set(update) {
-        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
-        // data - is the Object that records all the information about a particular User
-        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
-        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
-        Object.assign(this.data, update);
-    }
-    getAll() {
-        return this.data; // T is <UserProps> === id, name, age
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3wylh":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
-parcelHelpers.export(exports, "ApiSync", ()=>ApiSync);
-var _axios = require("axios");
-var _axiosDefault = parcelHelpers.interopDefault(_axios);
-class ApiSync {
-    // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
-    constructor(rootUrl){
-        this.rootUrl = rootUrl;
-    }
-    // whenever I call fetch, it must be called with an ID that has to be a number
-    // return AxiosPromise because when I call Axios, I get back a promise and it is a promise that is implemented by the Axios library
-    fetch(id) {
-        // Get request (retrieve User with the given ID)
-        return (0, _axiosDefault.default).get(`${this.rootUrl}/${id}`);
-    }
-    // saves some data about the User to the server
-    // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
-    save(data) {
-        //const id = data.id;
-        const { id } = data;
-        if (id) // if there is a User (updates the info of the User)
-        // 2nd Arg = data
-        return (0, _axiosDefault.default).put(`${this.rootUrl}/${id}`, data);
-        else // if there is no User
-        // 2nd Arg = data (all the info I want to send)
-        return (0, _axiosDefault.default).post(this.rootUrl, data);
-    }
-}
-
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
+},{"axios":"jo6P5","./User":"4rcHn","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
@@ -1509,7 +1318,37 @@ function bind(fn, thisArg) {
     };
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cpqD8":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"cpqD8":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _utilsJs = require("./../utils.js");
@@ -5519,7 +5358,142 @@ Object.entries(HttpStatusCode).forEach(([key, value])=>{
 });
 exports.default = HttpStatusCode;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4rcHn":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "User", ()=>User);
+var _model = require("./Model");
+var _attributes = require("./Attributes");
+var _apiSync = require("./ApiSync");
+var _eventing = require("./Eventing");
+const rootUrl = "http://localhost:3000/users";
+class User extends (0, _model.Model) {
+    // gives a pre-configured version of the User (copy of User with all appropriate attributes)
+    // attrs - pass in the starting initial properties for creating a new instance of User
+    // : User - returns a pre initialized User
+    static buildUser(attrs) {
+        return new User(// first argument needs to satisfy the Model 'attributes' interface
+        new (0, _attributes.Attributes)(attrs), new (0, _eventing.Eventing)(), new (0, _apiSync.ApiSync)(rootUrl));
+    }
+}
+
+},{"./Model":"f033k","./Attributes":"6Bbds","./ApiSync":"3wylh","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f033k":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// added type constraint T extends HasId
+parcelHelpers.export(exports, "Model", ()=>Model);
+class Model {
+    // takes an instance of anything that satisfies ModelAttributes, Sync and Events Interface and it's going to assign them all to Private Properties
+    constructor(// needs to satisfy ModelAttributes interface
+    attributes, // needs to satisfy Events interface
+    events, // needs to satisfy Sync interface
+    sync){
+        this.attributes = attributes;
+        this.events = events;
+        this.sync = sync;
+        this./*   get on() {
+    return this.events.on;
+  } */ // Shorter Syntax
+        // takes Arguments, returns directly the 'on' function from 'this.events'
+        on = this.events.on;
+        this.trigger = this.events.trigger;
+        this.get = this.attributes.get;
+    }
+    // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
+    // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
+    set(update) {
+        this.attributes.set(update);
+        this.events.trigger("change");
+    }
+    // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
+    // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
+    fetch() {
+        const id = this.get("id");
+        // if 'id' doesn't exist, if it's not a number or undefined
+        if (typeof id !== "number") throw new Error("Cannot fetch without an id");
+        // when I have 'id', call the 'fetch' Method on 'sync'
+        this.sync.fetch(id).then((response)=>{
+            this.set(response.data); // updates 'attributes' and triggers 'change' event
+        });
+    }
+    // pulls off all different properties off the User class, specifically off the 'attributes' Property
+    // then it will save all the info to the JSON server
+    save() {
+        this.sync.save(this.attributes.getAll()) // getAll - gets T === id, name, age
+        .then((response)=>{
+            this.trigger("save");
+        }).catch(()=>{
+            this.trigger("error");
+        });
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6Bbds":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Attributes", ()=>Attributes);
+class Attributes {
+    // 'data' - has all the custom info about the User
+    constructor(data){
+        this.data = data;
+        this.// will be called with some 'key' - name of the property that I try to retrieve
+        // K & T - represents some kind of TYPE
+        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
+        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
+        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
+        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
+        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
+        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
+        get = (key)=>{
+            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+        };
+    }
+    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
+    set(update) {
+        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
+        // data - is the Object that records all the information about a particular User
+        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
+        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
+        Object.assign(this.data, update);
+    }
+    getAll() {
+        return this.data; // T is <UserProps> === id, name, age
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3wylh":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
+parcelHelpers.export(exports, "ApiSync", ()=>ApiSync);
+var _axios = require("axios");
+var _axiosDefault = parcelHelpers.interopDefault(_axios);
+class ApiSync {
+    // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
+    constructor(rootUrl){
+        this.rootUrl = rootUrl;
+    }
+    // whenever I call fetch, it must be called with an ID that has to be a number
+    // return AxiosPromise because when I call Axios, I get back a promise and it is a promise that is implemented by the Axios library
+    fetch(id) {
+        // Get request (retrieve User with the given ID)
+        return (0, _axiosDefault.default).get(`${this.rootUrl}/${id}`);
+    }
+    // saves some data about the User to the server
+    // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
+    save(data) {
+        //const id = data.id;
+        const { id } = data;
+        if (id) // if there is a User (updates the info of the User)
+        // 2nd Arg = data
+        return (0, _axiosDefault.default).put(`${this.rootUrl}/${id}`, data);
+        else // if there is no User
+        // 2nd Arg = data (all the info I want to send)
+        return (0, _axiosDefault.default).post(this.rootUrl, data);
+    }
+}
+
+},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
 // Type Alias for a Empty Function (no Arg and no return values)
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
