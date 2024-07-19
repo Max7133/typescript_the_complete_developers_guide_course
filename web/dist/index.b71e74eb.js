@@ -584,25 +584,31 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"h7u1C":[function(require,module,exports) {
+var _user = require("./models/User");
 var _collection = require("./models/Collection");
-const collection = new (0, _collection.Collection)("http://localhost:3000/users");
+// User - the class that is going to be eventually produced
+// UserProps - description of that JSON Object that I will get back from the API or the Array of JSON Objects
+// 2nd argument - passing in a function that takes in an Object of structure UserProps and return an instance of User
+const collection = new (0, _collection.Collection)("http://localhost:3000/users", (json)=>(0, _user.User).buildUser(json));
 // get notification when the 'fetch' has been completed
 collection.on("change", ()=>{
     console.log(collection);
 });
 collection.fetch();
 
-},{"./models/Collection":"dD11O"}],"dD11O":[function(require,module,exports) {
+},{"./models/Collection":"dD11O","./models/User":"4rcHn"}],"dD11O":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Collection", ()=>Collection);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
-var _user = require("./User");
 var _eventing = require("./Eventing");
 class Collection {
-    constructor(rootUrl){
+    // json - is for instance the UserProps looking Object, that has the name, id and age,
+    // and it's going to take an argument of type K and the it's going to eventually return something of type T, which is the actual thing that I'm storing inside the Model Array
+    constructor(rootUrl, deserialize){
         this.rootUrl = rootUrl;
+        this.deserialize = deserialize;
         this.models = [];
         this.events = new (0, _eventing.Eventing)();
     }
@@ -616,10 +622,9 @@ class Collection {
     fetch() {
         // get JSON data and turn each of those Objects into an instance of User and add it into Models Array
         (0, _axiosDefault.default).get(this.rootUrl).then((response)=>{
+            // K - for instance JSON data
             response.data.forEach((value)=>{
-                // taking the value and putting it into User.buildUser that will create a User
-                const user = (0, _user.User).buildUser(value);
-                this.models.push(user); // push User ro Models Array
+                this.models.push(this.deserialize(value)); // pushes in the JSON data it gets, and it will get back an instance of Model, which will add into the Array of Models
             });
             // after loop, trigger change event
             this.trigger("change");
@@ -627,7 +632,7 @@ class Collection {
     }
 }
 
-},{"axios":"jo6P5","./User":"4rcHn","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
+},{"axios":"jo6P5","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
@@ -5358,6 +5363,46 @@ Object.entries(HttpStatusCode).forEach(([key, value])=>{
 });
 exports.default = HttpStatusCode;
 
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
+// Type Alias for a Empty Function (no Arg and no return values)
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// class responsible for handling all the different Events tied to a User
+parcelHelpers.export(exports, "Eventing", ()=>Eventing);
+class Eventing {
+    constructor(){
+        // Stores all the different Events that get registered
+        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
+        // [key: string] - because I don't know yet what Properties this Object is going to have
+        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
+        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
+        this.events = {};
+        // called with some 'eventName' of Event that is a String
+        // 2nd Arg - callback function
+        this.on = (eventName, callback)=>{
+            // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
+            // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
+            // either way 'handlers' is going to be an Array
+            const handlers = this.events[eventName] || [];
+            // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
+            handlers.push(callback);
+            // then it will take the 'handlers' Array and assign it back to 'this.events' Object
+            this.events[eventName] = handlers;
+        };
+        // will trigger all the different callbacks registered to some particular Event
+        this.trigger = (eventName)=>{
+            // checks if it has some registered events with this given 'eventName'
+            const handlers = this.events[eventName];
+            // if 'handlers' is defined and if it is an Array, then 'return' early
+            if (!handlers || handlers.length === 0) return;
+            // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
+            handlers.forEach((callback)=>{
+                callback();
+            });
+        };
+    }
+}
+
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
@@ -5493,46 +5538,6 @@ class ApiSync {
     }
 }
 
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7459s":[function(require,module,exports) {
-// Type Alias for a Empty Function (no Arg and no return values)
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// class responsible for handling all the different Events tied to a User
-parcelHelpers.export(exports, "Eventing", ()=>Eventing);
-class Eventing {
-    constructor(){
-        // Stores all the different Events that get registered
-        // all the 'key's' are going to be Strings, and the Value is going to be an Array of Callback Functions
-        // [key: string] - because I don't know yet what Properties this Object is going to have
-        // I don't need to pass 'events' when creating an instance of the User, that's why I will NOT add it to the 'constructor'
-        // I only going to allow 'events' to be registered after a User has been created. (that's why I added this as a sepparate Property)
-        this.events = {};
-        // called with some 'eventName' of Event that is a String
-        // 2nd Arg - callback function
-        this.on = (eventName, callback)=>{
-            // when it first creates a User, it will look at 'this.events' and look up 'eventName' that's going to give possibly 'undefined', if it does, then it will just fall back to assigning an Empty Array to 'handlers'
-            // when 'this.events[eventName]' is defined, then it will take the Array of Callbacks that I've had already created and assign it to 'handlers' instead.
-            // either way 'handlers' is going to be an Array
-            const handlers = this.events[eventName] || [];
-            // after getting that Array, it will add in the brand new Callback that was passed into the 'on()'
-            handlers.push(callback);
-            // then it will take the 'handlers' Array and assign it back to 'this.events' Object
-            this.events[eventName] = handlers;
-        };
-        // will trigger all the different callbacks registered to some particular Event
-        this.trigger = (eventName)=>{
-            // checks if it has some registered events with this given 'eventName'
-            const handlers = this.events[eventName];
-            // if 'handlers' is defined and if it is an Array, then 'return' early
-            if (!handlers || handlers.length === 0) return;
-            // if there are some defined 'handlers' Array, then call all those Callbacks right after I have that early return
-            handlers.forEach((callback)=>{
-                callback();
-            });
-        };
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map
