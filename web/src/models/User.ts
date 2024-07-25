@@ -2,6 +2,7 @@ import { Model } from './Model';
 import { Attributes } from './Attributes';
 import { ApiSync } from './ApiSync';
 import { Eventing } from './Eventing';
+import { Collection } from './Collection';
 
 export interface UserProps {
   // ? - it can have a 'name' or 'age' but not a must!
@@ -22,6 +23,17 @@ export class User extends Model<UserProps> {
       new Attributes<UserProps>(attrs),
       new Eventing(),
       new ApiSync<UserProps>(rootUrl)
+    );
+  }
+
+  // Returns the 'Collection' of Users
+  // : Collection - returns an instance of Collection
+  static buildUserCollection(): Collection<User, UserProps> {
+    // User - the class that is going to be eventually produced
+    // UserProps - description of that JSON Object that I will get back from the API or the Array of JSON Objects
+    // 2nd argument - passing in a function that takes in an Object of structure UserProps and return an instance of User
+    return new Collection<User, UserProps>(rootUrl, (json: UserProps) =>
+      User.buildUser(json)
     );
   }
 

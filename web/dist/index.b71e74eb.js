@@ -585,54 +585,187 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 
 },{}],"h7u1C":[function(require,module,exports) {
 var _user = require("./models/User");
-var _collection = require("./models/Collection");
-// User - the class that is going to be eventually produced
-// UserProps - description of that JSON Object that I will get back from the API or the Array of JSON Objects
-// 2nd argument - passing in a function that takes in an Object of structure UserProps and return an instance of User
-const collection = new (0, _collection.Collection)("http://localhost:3000/users", (json)=>(0, _user.User).buildUser(json));
-// get notification when the 'fetch' has been completed
+const collection = (0, _user.User).buildUserCollection();
 collection.on("change", ()=>{
     console.log(collection);
 });
 collection.fetch();
 
-},{"./models/Collection":"dD11O","./models/User":"4rcHn"}],"dD11O":[function(require,module,exports) {
+},{"./models/User":"4rcHn"}],"4rcHn":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Collection", ()=>Collection);
-var _axios = require("axios");
-var _axiosDefault = parcelHelpers.interopDefault(_axios);
+parcelHelpers.export(exports, "User", ()=>User);
+var _model = require("./Model");
+var _attributes = require("./Attributes");
+var _apiSync = require("./ApiSync");
 var _eventing = require("./Eventing");
-class Collection {
-    // json - is for instance the UserProps looking Object, that has the name, id and age,
-    // and it's going to take an argument of type K and the it's going to eventually return something of type T, which is the actual thing that I'm storing inside the Model Array
-    constructor(rootUrl, deserialize){
-        this.rootUrl = rootUrl;
-        this.deserialize = deserialize;
-        this.models = [];
-        this.events = new (0, _eventing.Eventing)();
+var _collection = require("./Collection");
+const rootUrl = "http://localhost:3000/users";
+class User extends (0, _model.Model) {
+    // gives a pre-configured version of the User (copy of User with all appropriate attributes)
+    // attrs - pass in the starting initial properties for creating a new instance of User
+    // : User - returns a pre initialized User
+    static buildUser(attrs) {
+        return new User(// first argument needs to satisfy the Model 'attributes' interface
+        new (0, _attributes.Attributes)(attrs), new (0, _eventing.Eventing)(), new (0, _apiSync.ApiSync)(rootUrl));
     }
-    // making sure that other class or locations inside of the code can directly call on(), trigger() on Collection class
-    get on() {
-        return this.events.on;
+    // Returns the 'Collection' of Users
+    // : Collection - returns an instance of Collection
+    static buildUserCollection() {
+        // User - the class that is going to be eventually produced
+        // UserProps - description of that JSON Object that I will get back from the API or the Array of JSON Objects
+        // 2nd argument - passing in a function that takes in an Object of structure UserProps and return an instance of User
+        return new (0, _collection.Collection)(rootUrl, (json)=>User.buildUser(json));
     }
-    get trigger() {
-        return this.events.trigger;
+}
+
+},{"./Model":"f033k","./Attributes":"6Bbds","./ApiSync":"3wylh","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./Collection":"dD11O"}],"f033k":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// added type constraint T extends HasId
+parcelHelpers.export(exports, "Model", ()=>Model);
+class Model {
+    // takes an instance of anything that satisfies ModelAttributes, Sync and Events Interface and it's going to assign them all to Private Properties
+    constructor(// needs to satisfy ModelAttributes interface
+    attributes, // needs to satisfy Events interface
+    events, // needs to satisfy Sync interface
+    sync){
+        this.attributes = attributes;
+        this.events = events;
+        this.sync = sync;
+        this./*   get on() {
+    return this.events.on;
+  } */ // Shorter Syntax
+        // takes Arguments, returns directly the 'on' function from 'this.events'
+        on = this.events.on;
+        this.trigger = this.events.trigger;
+        this.get = this.attributes.get;
     }
+    // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
+    // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
+    set(update) {
+        this.attributes.set(update);
+        this.events.trigger("change");
+    }
+    // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
+    // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
     fetch() {
-        // get JSON data and turn each of those Objects into an instance of User and add it into Models Array
-        (0, _axiosDefault.default).get(this.rootUrl).then((response)=>{
-            // K - for instance JSON data
-            response.data.forEach((value)=>{
-                this.models.push(this.deserialize(value)); // pushes in the JSON data it gets, and it will get back an instance of Model, which will add into the Array of Models
-            });
-            // after loop, trigger change event
-            this.trigger("change");
+        const id = this.get("id");
+        // if 'id' doesn't exist, if it's not a number or undefined
+        if (typeof id !== "number") throw new Error("Cannot fetch without an id");
+        // when I have 'id', call the 'fetch' Method on 'sync'
+        this.sync.fetch(id).then((response)=>{
+            this.set(response.data); // updates 'attributes' and triggers 'change' event
+        });
+    }
+    // pulls off all different properties off the User class, specifically off the 'attributes' Property
+    // then it will save all the info to the JSON server
+    save() {
+        this.sync.save(this.attributes.getAll()) // getAll - gets T === id, name, age
+        .then((response)=>{
+            this.trigger("save");
+        }).catch(()=>{
+            this.trigger("error");
         });
     }
 }
 
-},{"axios":"jo6P5","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"6Bbds":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Attributes", ()=>Attributes);
+class Attributes {
+    // 'data' - has all the custom info about the User
+    constructor(data){
+        this.data = data;
+        this.// will be called with some 'key' - name of the property that I try to retrieve
+        // K & T - represents some kind of TYPE
+        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
+        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
+        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
+        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
+        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
+        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
+        get = (key)=>{
+            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
+        };
+    }
+    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
+    set(update) {
+        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
+        // data - is the Object that records all the information about a particular User
+        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
+        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
+        Object.assign(this.data, update);
+    }
+    getAll() {
+        return this.data; // T is <UserProps> === id, name, age
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3wylh":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
+parcelHelpers.export(exports, "ApiSync", ()=>ApiSync);
+var _axios = require("axios");
+var _axiosDefault = parcelHelpers.interopDefault(_axios);
+class ApiSync {
+    // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
+    constructor(rootUrl){
+        this.rootUrl = rootUrl;
+    }
+    // whenever I call fetch, it must be called with an ID that has to be a number
+    // return AxiosPromise because when I call Axios, I get back a promise and it is a promise that is implemented by the Axios library
+    fetch(id) {
+        // Get request (retrieve User with the given ID)
+        return (0, _axiosDefault.default).get(`${this.rootUrl}/${id}`);
+    }
+    // saves some data about the User to the server
+    // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
+    save(data) {
+        //const id = data.id;
+        const { id } = data;
+        if (id) // if there is a User (updates the info of the User)
+        // 2nd Arg = data
+        return (0, _axiosDefault.default).put(`${this.rootUrl}/${id}`, data);
+        else // if there is no User
+        // 2nd Arg = data (all the info I want to send)
+        return (0, _axiosDefault.default).post(this.rootUrl, data);
+    }
+}
+
+},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jo6P5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "default", ()=>(0, _axiosJsDefault.default));
@@ -1323,37 +1456,7 @@ function bind(fn, thisArg) {
     };
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"cpqD8":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cpqD8":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _utilsJs = require("./../utils.js");
@@ -5403,141 +5506,42 @@ class Eventing {
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4rcHn":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dD11O":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "User", ()=>User);
-var _model = require("./Model");
-var _attributes = require("./Attributes");
-var _apiSync = require("./ApiSync");
-var _eventing = require("./Eventing");
-const rootUrl = "http://localhost:3000/users";
-class User extends (0, _model.Model) {
-    // gives a pre-configured version of the User (copy of User with all appropriate attributes)
-    // attrs - pass in the starting initial properties for creating a new instance of User
-    // : User - returns a pre initialized User
-    static buildUser(attrs) {
-        return new User(// first argument needs to satisfy the Model 'attributes' interface
-        new (0, _attributes.Attributes)(attrs), new (0, _eventing.Eventing)(), new (0, _apiSync.ApiSync)(rootUrl));
-    }
-}
-
-},{"./Model":"f033k","./Attributes":"6Bbds","./ApiSync":"3wylh","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f033k":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// added type constraint T extends HasId
-parcelHelpers.export(exports, "Model", ()=>Model);
-class Model {
-    // takes an instance of anything that satisfies ModelAttributes, Sync and Events Interface and it's going to assign them all to Private Properties
-    constructor(// needs to satisfy ModelAttributes interface
-    attributes, // needs to satisfy Events interface
-    events, // needs to satisfy Sync interface
-    sync){
-        this.attributes = attributes;
-        this.events = events;
-        this.sync = sync;
-        this./*   get on() {
-    return this.events.on;
-  } */ // Shorter Syntax
-        // takes Arguments, returns directly the 'on' function from 'this.events'
-        on = this.events.on;
-        this.trigger = this.events.trigger;
-        this.get = this.attributes.get;
-    }
-    // Any time that will 'set' a property, or update some data on User, the event 'change' is going to be triggered
-    // Any time this method is called, it will update the 'data' on 'Attributes' and the 'change' Event will be triggered as well
-    set(update) {
-        this.attributes.set(update);
-        this.events.trigger("change");
-    }
-    // gets the current 'id' of 'attributes', and only if it has an 'id', then it will call the 'fetch' Method on 'sync'
-    // then it will wait fot the request to be resolved, a get a response back from JSON server, then it's going to take that info I get and set it on the 'attributes' instance
-    fetch() {
-        const id = this.get("id");
-        // if 'id' doesn't exist, if it's not a number or undefined
-        if (typeof id !== "number") throw new Error("Cannot fetch without an id");
-        // when I have 'id', call the 'fetch' Method on 'sync'
-        this.sync.fetch(id).then((response)=>{
-            this.set(response.data); // updates 'attributes' and triggers 'change' event
-        });
-    }
-    // pulls off all different properties off the User class, specifically off the 'attributes' Property
-    // then it will save all the info to the JSON server
-    save() {
-        this.sync.save(this.attributes.getAll()) // getAll - gets T === id, name, age
-        .then((response)=>{
-            this.trigger("save");
-        }).catch(()=>{
-            this.trigger("error");
-        });
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6Bbds":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Attributes", ()=>Attributes);
-class Attributes {
-    // 'data' - has all the custom info about the User
-    constructor(data){
-        this.data = data;
-        this.// will be called with some 'key' - name of the property that I try to retrieve
-        // K & T - represents some kind of TYPE
-        // <K extends keyof T> - sets up a Generic Constraint (A Constraint limits the types that K in this case can be.)
-        // the Value or Type of K can only ever be one of the 'keys' of T (keyof T)
-        // <K extends keyof T> - means that the TYPE of K can only ever be 1 of the different keys of T (name, age, id)
-        // (key: K) - whatever Argument I'm passing in is going to be of TYPE K
-        // since K can only ever be one of the different TYPES/KEYS of T, that means that I can only call 'get' with either a 'name', 'age', 'ID' as Strings
-        // T[K] - return TYPE Annotation is essentially the same as a normal Object lookup. For instance: const colors = {red: 'red'}; colors['red']
-        get = (key)=>{
-            return this.data[key]; // with Arrow function, This Keyword will always be === 'attributes'
-        };
-    }
-    // when I call set(), it will then pass in some Object that contains all the different updates that I want to make to the User
-    set(update) {
-        // Object.assign() is going to take 2 Objects, the 2nd Object that I pass in is going to have all of its Properties taken and copied over to the 1st Object
-        // data - is the Object that records all the information about a particular User
-        // then, take the 'update Object' that I passed in and pass it in as this 2nd Argument
-        // Essentially, this basically says take all the Properties on 'update' and all the values in there and just copy paste them over onto this 'data' and override all the Properties on this 'data'.
-        Object.assign(this.data, update);
-    }
-    getAll() {
-        return this.data; // T is <UserProps> === id, name, age
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3wylh":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// extends "HasId" - to make sure that TS knows that whatever type I use with 'class Sync' is going to satisfy this 'interface'
-parcelHelpers.export(exports, "ApiSync", ()=>ApiSync);
+parcelHelpers.export(exports, "Collection", ()=>Collection);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
-class ApiSync {
-    // passing in the rootUrl for making these requests as an Argument to class Sync when creating an instance of it
-    constructor(rootUrl){
+var _eventing = require("./Eventing");
+class Collection {
+    // json - is for instance the UserProps looking Object, that has the name, id and age,
+    // and it's going to take an argument of type K and the it's going to eventually return something of type T, which is the actual thing that I'm storing inside the Model Array
+    constructor(rootUrl, deserialize){
         this.rootUrl = rootUrl;
+        this.deserialize = deserialize;
+        this.models = [];
+        this.events = new (0, _eventing.Eventing)();
     }
-    // whenever I call fetch, it must be called with an ID that has to be a number
-    // return AxiosPromise because when I call Axios, I get back a promise and it is a promise that is implemented by the Axios library
-    fetch(id) {
-        // Get request (retrieve User with the given ID)
-        return (0, _axiosDefault.default).get(`${this.rootUrl}/${id}`);
+    // making sure that other class or locations inside of the code can directly call on(), trigger() on Collection class
+    get on() {
+        return this.events.on;
     }
-    // saves some data about the User to the server
-    // returns AxiosPromise, so that whenever I call 'save()', I will get back some Object that I can use to determine whether or not the user was correctly persisted
-    save(data) {
-        //const id = data.id;
-        const { id } = data;
-        if (id) // if there is a User (updates the info of the User)
-        // 2nd Arg = data
-        return (0, _axiosDefault.default).put(`${this.rootUrl}/${id}`, data);
-        else // if there is no User
-        // 2nd Arg = data (all the info I want to send)
-        return (0, _axiosDefault.default).post(this.rootUrl, data);
+    get trigger() {
+        return this.events.trigger;
+    }
+    fetch() {
+        // get JSON data and turn each of those Objects into an instance of User and add it into Models Array
+        (0, _axiosDefault.default).get(this.rootUrl).then((response)=>{
+            // K - for instance JSON data
+            response.data.forEach((value)=>{
+                this.models.push(this.deserialize(value)); // pushes in the JSON data it gets, and it will get back an instance of Model, which will add into the Array of Models
+            });
+            // after loop, trigger change event
+            this.trigger("change");
+        });
     }
 }
 
-},{"axios":"jo6P5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{"axios":"jo6P5","./Eventing":"7459s","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map
