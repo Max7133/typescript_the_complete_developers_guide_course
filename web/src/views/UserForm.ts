@@ -1,7 +1,9 @@
+import { User } from '../models/User';
+
 export class UserForm {
   // reference to HTML element
   // used constructor so it can initialize and declare it at the same time
-  constructor(public parent: Element) {}
+  constructor(public parent: Element, public model: User) {}
 
   // when is called, it will return an Object with some special Keys & Values
   // : { [key: string]: () => void } - Tells TS that this will return an Object, with the Keys containing Strings, and that the Value for everything inside that Object will be a Function that takes no Arguments and returns nothing.
@@ -25,6 +27,8 @@ export class UserForm {
     return `
       <div>
         <h1>User Form</h1>
+        <div>User name: ${this.model.get('name')}</div>
+        <div>User age: ${this.model.get('age')}</div>
         <input />
         <button>Click Me</button>
       </div>
