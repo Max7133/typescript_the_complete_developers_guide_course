@@ -3,25 +3,31 @@ import { User } from '../models/User';
 export class UserForm {
   // reference to HTML element
   // used constructor so it can initialize and declare it at the same time
-  constructor(public parent: Element, public model: User) {}
+  constructor(public parent: Element, public model: User) {
+    this.bindModel();
+  }
+
+  // when the 'model' is received, it will start listening to its 'change' event, and when it's triggered, then the render() is called, which re-renders the 'template' them re-bind all the different Events and then add that HTML to the page
+  bindModel(): void {
+    this.model.on('change', () => {
+      this.render();
+    });
+  }
 
   // when is called, it will return an Object with some special Keys & Values
   // : { [key: string]: () => void } - Tells TS that this will return an Object, with the Keys containing Strings, and that the Value for everything inside that Object will be a Function that takes no Arguments and returns nothing.
   eventsMap(): { [key: string]: () => void } {
     // the Keys inside of here are Strings which will contain first a Event Name after a colon, and then the Name of the Element/Selector for the Element that I want to bind the Event handler to
     return {
-      'click:button': this.onButtonClick,
-      'mouseenter:h1': this.onHeaderHover,
+      'click:.set-age': this.onSetAgeClick,
     };
   }
 
-  onButtonClick(): void {
-    console.log('Hi there');
-  }
-
-  onHeaderHover(): void {
-    console.log('H1 was hovered over');
-  }
+  // onSetAgeClick(): void {
+  onSetAgeClick = (): void => {
+    // this.model - instance of a User
+    this.model.setRandomAge(); // updates Model and changes the age on it
+  };
 
   template(): string {
     return `
@@ -31,6 +37,7 @@ export class UserForm {
         <div>User age: ${this.model.get('age')}</div>
         <input />
         <button>Click Me</button>
+        <button class="set-age">Set Random Age</button>
       </div>
     `;
   }
@@ -54,6 +61,10 @@ export class UserForm {
 
   // takes the 'template' and appends it as a Child to the Parent
   render(): void {
+    // parent - the HTML template itself (so that on every click it wont create a 2nd, 3rd... template on the page)
+    // '' - empties out the parent element the it will re-render the template, bind the Events and then stick it in at the 'parent' Element
+    this.parent.innerHTML = '';
+
     const templateElement = document.createElement('template');
     // inserts innerHTML inside this 'template' element
     templateElement.innerHTML = this.template();

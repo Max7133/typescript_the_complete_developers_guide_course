@@ -37,6 +37,12 @@ export class User extends Model<UserProps> {
     );
   }
 
+  setRandomAge(): void {
+    const age = Math.round(Math.random() * 100);
+    // this.set({ age: age }); // set the age on Model class
+    this.set({ age }); // set the age on Model class (ES6 syntax)
+  }
+
   // User that was synced to some other source of information instead of an API (for instance Local Storage)
   /*   static buildLocalUser(attrs: UserProps): User {
     return new User(
