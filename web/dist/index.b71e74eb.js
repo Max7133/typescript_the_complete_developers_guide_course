@@ -610,10 +610,21 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "UserForm", ()=>UserForm);
 class UserForm {
     // reference to HTML element
+    // the 'parent' element is the HTML element that contains all of the different HTML tied to this current view,
+    // , every element inside the browser has a 'querySelectlor' Method tied to it that I can use to search through ALL THE CHILD ELEMENTS to this 'parent'
     // used constructor so it can initialize and declare it at the same time
     constructor(parent, model){
         this.parent = parent;
         this.model = model;
+        this.onSetNameClick = ()=>{
+            const input = this.parent.querySelector("input");
+            // pulling text from 'input'
+            const name = input.value;
+            // update model
+            this.model.set({
+                name
+            }); // any time 'set()' is called, it will trigger a 'change' Event, which will automatically update the TEMPLATE as well
+        };
         this.// onSetAgeClick(): void {
         onSetAgeClick = ()=>{
             // this.model - instance of a User
@@ -632,7 +643,9 @@ class UserForm {
     eventsMap() {
         // the Keys inside of here are Strings which will contain first a Event Name after a colon, and then the Name of the Element/Selector for the Element that I want to bind the Event handler to
         return {
-            "click:.set-age": this.onSetAgeClick
+            "click:.set-age": this.onSetAgeClick,
+            // any time that I click on an element that has a Class Name of 'set-name', I will run a Helper Method 'this.onSetNameClick'
+            "click:.set-name": this.onSetNameClick
         };
     }
     template() {
@@ -642,7 +655,7 @@ class UserForm {
         <div>User name: ${this.model.get("name")}</div>
         <div>User age: ${this.model.get("age")}</div>
         <input />
-        <button>Click Me</button>
+        <button class="set-name">Change Name</button>
         <button class="set-age">Set Random Age</button>
       </div>
     `;
