@@ -29,10 +29,14 @@ export class UserForm {
 
   onSetNameClick = (): void => {
     const input = this.parent.querySelector('input');
-    // pulling text from 'input'
-    const name = input.value;
-    // update model
-    this.model.set({ name }); // any time 'set()' is called, it will trigger a 'change' Event, which will automatically update the TEMPLATE as well
+    // Type Guard (for eliminating TS error for that I can be null 'const input: HTMLInputElement | null')
+    // if 'input' has a value, then treat is as throgh it were a value and as trhough it's not null
+    if (input) {
+      // pulling text from 'input'
+      const name = input.value; // now 'const input: HTMLInputElement'
+      // update model
+      this.model.set({ name }); // any time 'set()' is called, it will trigger a 'change' Event, which will automatically update the TEMPLATE as well
+    }
   };
 
   // onSetAgeClick(): void {

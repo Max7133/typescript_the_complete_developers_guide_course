@@ -16,6 +16,14 @@ import { User } from './models/User';
 const user = User.buildUser({ name: 'NAME', age: 20 });
 
 // gets a reference to the <div> with id="root" and pass it into the userForm as the Parent
-const userForm = new UserForm(document.getElementById('root'), user);
+const root = document.getElementById('root');
 
-userForm.render();
+// Removed error with Type Guard
+// is I accidentally render out the app or attempt to render it when I don't have a 'root' Element, it will let me know in the console
+if (root) {
+  const userForm = new UserForm(root, user);
+
+  userForm.render();
+} else {
+  throw new Error('Root element not found');
+}
